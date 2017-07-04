@@ -1,0 +1,220 @@
+﻿@{
+    ViewBag.Title = "ALLCenterProDetail_PA";
+    Layout = null;
+}
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+@*<link href="~/Content/css/task.css" rel="stylesheet" />*@
+<link href="~/content/css/headfoot.css" rel="stylesheet" />
+<script src="~/Scripts/mycommon.js"></script>
+<style type="text/css">
+    /*body {
+            background: url(img/bg.png) top center no-repeat;
+            background-size: 100%  auto;
+        }*/
+    .maskcendetail_pa {
+        position: absolute;
+        top: 0px;
+        filter: alpha(opacity=60);
+        background-color: #777;
+        z-index: 1002;
+        left: 0px;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="container">
+    <div style="padding:5px"></div>
+
+    <ul class="chaxun">
+        <li><input type="button" value="今日" id="selectTodaybtncendetail_pa" class="button_chaxun"></li>
+        <li><input type="button" value="昨天" id="selectYesterdaybtncendetail_pa" class="button_chaxun"></li>
+
+        <li>开始日期:<input id="startcendetail_pa" class="easyui-datebox" editable="false"></li>
+        <li>
+            结束日期:  <input id="endcendetail_pa" class="easyui-datebox" editable="false">
+        </li>
+
+        <li>
+            用户ID:  <input id="useridcendetail_pa" class="easyui-textbox" maxlength="10">
+        </li>
+        <li>
+            @*<input id="objcombox" class="easyui-combobox" name="dept"
+            data-options="valueField:'id',editable:false,textField:'text',url:'/common/GetObjectCombobox'" />*@
+            选择中心:<input id="objcombox" class="easyui-combobox" data-options="valueField:'id',editable:false,textField:'text',url:'/common/GetObjectCombobox/0'" />
+        </li>
+        <li><input type="button" value="查询" id="commitcendetail_pa" class="button_chaxun"></li>
+        <li>
+            合格比例：<input id="setpersent" class="easyui-combobox" type="text" name="name" value="" />
+        </li>
+        <li><input type="button" value="设置比例" class="btn_set"></li>
+    </ul>
+    <div style="margin:0px 50px auto;  ">
+        <!--<div id="magazineGrid"></div>-->
+        <div style="min-height:300px;">
+            <div id="datagridcendetail_pa"> </div>
+        </div>
+    </div>
+    <!--创建一个遮罩-->
+    <div id="maskcendetail_pa" class="maskcendetail_pa"><div class="gif"><img src="/img/wait.gif"></div></div>
+</div>
+<script type="text/javascript">
+    var array = {};
+    var interval; //调度器对象。
+    var canpost = "true" //默认可以提交
+    var startcendetail_pa; //开始时间
+    var endcendetail_pa; //结束时间
+    var DATE_FORMAT = /^[0-9]{4}-[0-1]?[0-9]{2}-[0-3]?[0-9]{2}$/; //用于判断日期格式是否正确
+    //获取窗口百分比的长度
+    function fixWidth(percent) {
+        return document.body.clientWidth * percent; //这里你可以自己做调整
+    }
+    function fixHeight(percent) {
+        return document.documentElement.clientHeight * percent; //这里你可以自己做调整
+    }
+    //检验日期格式是否正确
+    function checkdate(thedate) {
+        if (DATE_FORMAT.test(thedate)) {
+            // alert("您输入的日期格式正确");
+            return "true";
+        } else {
+            alert("抱歉，您输入的日期格式有误，正确格式应为 2016-01-01");
+            return "false";
+        }
+    }
+
+    $(function () {
+        //兼容火狐、IE8
+        //显示遮罩层
+        function showMask() {
+            $("#maskcendetail_pa").css("height", $(document).height());
+            $("#maskcendetail_pa").css("width", $(document).width());
+            $("#maskcendetail_pa").show();
+        }
+        //隐藏遮罩层
+        function hideMask() {
+            $("#maskcendetail_pa").hide();
+        }
+        //默认加载页面隐藏遮罩层
+        $("#maskcendetail_pa").hide();
+
+
+        // 禁止F5刷新
+        $(document).bind("keydown", function (e) {
+            e = window.event || e;
+            if (e.keyCode == 116) {
+                // alert("禁止F5刷新");
+                e.keyCode = 0;
+                return false;
+            }
+        });
+        $("#selectTodaybtncendetail_pa").click(function () {
+            $("#startcendetail_pa").datebox("setValue", datenowstr());
+            $("#endcendetail_pa").datebox("setValue", datenowstr());
+            GetGridata();
+        });
+        $("#selectYesterdaybtncendetail_pa").click(function () {
+
+            $("#startcendetail_pa").datebox("setValue", dateaddstr(-1));
+            $("#endcendetail_pa").datebox("setValue", dateaddstr(-1));
+            GetGridata();
+        });
+        //点击按钮提交
+        $("#commitcendetail_pa").click(function () {
+            GetGridata();
+        }); 
+        //点击按钮提交
+        $(".btn_set").click(function () {
+           
+        });
+        function GetGridata() {
+
+            //如果两个录入框都有数据
+            if (canpost == "false") {
+                alert("你查询的速度过快,请喝杯茶稍等片刻再查询...");
+            } else {
+                //赋予日期变量
+                startcendetail_pa = $('#startcendetail_pa').datebox('getValue');
+                endcendetail_pa = $('#endcendetail_pa').datebox('getValue');
+                // var objid = $("#objcombox").combobox("getValue");
+                //判断日期格式是否正确
+                if (checkdate(startcendetail_pa) == "true" && checkdate(endcendetail_pa) == "true") {
+                    postdata_users(startcendetail_pa, endcendetail_pa);
+                    canpost = "false";
+                }
+            }
+        }
+        //定义计时器间隔
+        function timerun() {
+            // alert("启用定时器间隔");
+            interval = setInterval(timefun, 1000);
+        }
+        //计时器触发事件
+        function timefun() {
+            //  alert("定时器已触发");
+            canpost = "true";
+            clearInterval(interval);
+        }
+
+        function postdata_users(startcendetail_pa, endcendetail_pa) {
+            var userid = $("#useridcendetail_pa").textbox("getValue");
+            var objectid = $("#objcombox").combobox("getValue");
+            if (objectid=="*"||objectid=="") {
+                objectid = -1;
+            }
+            //隐藏遮罩层
+            hideMask();
+            //        //设置倒计时,防止刷单
+            timerun();
+            // var allcount = 0;
+            $("#datagridcendetail_pa").datagrid({
+                url: '/ShowOutPut/AllCenterProDetail_PATJ',
+                pagination: true,
+                pageList: [20, 30, 80, 100, 200,500],
+                pageSize: 20, //页大小
+                queryParams: { startdate: startcendetail_pa, enddate: endcendetail_pa, userid: userid, objectid: objectid },
+                fitColumns: true,//"寄件人姓名","寄件人电话","收件人姓名","收件人电话","收件人地址","混合字段","物品重量"
+                columns: [[
+                    { field: 'userid', title: '用户ID', width: 100 },
+                    { field: 'type1', title: '日期', width: 100 },
+                    { field: 'type2', title: '字节数', width: 100 },
+                     { field: 'type3_1', title: '行编号', width: 100 },
+                      { field: 'type4', title: '正确字节数', width: 100 },
+                       { field: 'type5', title: '错误字节数', width: 100 },
+                        { field: 'type6', title: '计费字节数', width: 100 }
+                ]],
+                onLoadError: function () {
+                    alert("cw")
+                }
+                , onLoadSuccess: function (data) {
+                      compute();
+                }
+            });
+
+            function compute() {//计算函数
+                var rows = $('#datagridcendetail_pa').datagrid('getRows')//获取当前的数据行
+                var newrow = {
+                    type1: "<b>当前页合计</b>",
+                    type2: 0,
+                    type4: 0
+                };
+                for (var i = 0; i < rows.length; i++) {
+
+                    newrow.type2 += parseInt(rows[i]['type2']);
+                    newrow.type4 += parseInt(rows[i]['type4']);
+                }
+                //新增一行显示统计信息
+                $('#datagridcendetail_pa').datagrid('appendRow', newrow);
+
+            }
+
+        }
+        //默认执行请求
+        // postdata_users();
+    });
+</script>

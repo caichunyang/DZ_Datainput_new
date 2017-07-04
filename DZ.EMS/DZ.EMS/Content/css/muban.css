@@ -1,0 +1,122 @@
+*{
+	padding:0;
+	margin:0;
+	font-family: "微软雅黑";
+
+}
+ul li{
+	list-style: none;
+}
+a{
+	text-decoration:none;
+}
+
+.head{
+	width:100%;
+	height:94px;
+	background-color:#3899fa;
+	float:left;
+}
+.Logo{
+	width:320px;
+	height:63px;
+	float:left;
+	margin-left:325px;
+}
+.Logo img{
+	width:63px;
+	height:63px;
+	float:left;
+	padding-right:10px;
+}
+.Logo h2{
+	margin-top:30px;
+	font-size:22px;
+	color:#ffffff;
+}
+.count{
+	width:320px;
+	height:63px;
+	float:left;
+	color:#ffffff;
+	line-height: 32px;
+}
+.count_number{
+	width:300px;
+	height:20px;
+	border:2px solid #ffffff;
+	border-radius:20px;
+}
+.count_number2{
+	width:180px;
+	height:20px;
+	background:#232232;
+	border-radius:20px;
+	text-align: center;
+	color:#ffffff;
+	font-size:18px;
+}
+.count_number2 span{
+	position: relative;
+	top: -5px;
+}
+.navigation{
+	width:310px;
+	height:63px;
+	float:left;
+	color:#ffffff;
+	font-size:21px;
+	line-height: 63px;
+	margin-left:15px;
+}
+.navigation ul li{
+	float:left;
+	padding:0 20px 0 20px;
+}
+.User{
+	width:245px;
+	height:63px;
+	float:left;
+	background-color:#ffffff;
+	background-image: url(../img/user.png);
+	background-repeat:no-repeat;
+	color:#3899fa;
+	line-height: 31px;
+	margin-left:40px;
+}
+.User ul {
+	margin-left:90px;
+}
+/*head 结束*/
+
+.background{
+	width:100%;
+	height:900px;
+	background-color:#e8e4db;
+}
+
+
+/*中间 内容*/
+
+
+
+.footer{
+	width:100%;
+	/*height:167px;*/
+	height:18%;
+	float:left;
+	margin-top:60px;
+	background-color:#42e85c;
+}
+.footer ul{
+	float:left;
+	color:#ffffff;
+	line-height: 41px;
+	font-size:14px;
+	font-weight:bold;
+	margin-left:350px;
+}
+.footer a{
+	color:#3986cf;
+}
+/*底部结束*/

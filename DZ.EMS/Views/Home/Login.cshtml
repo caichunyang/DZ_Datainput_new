@@ -1,0 +1,108 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>登录</title>
+    <meta name="author" content="DeathGhost">
+    <link href="~/Scripts/login/style.css" rel="stylesheet" />
+    <style>
+        body {
+            height: 100%;
+            background: #16a085;
+            overflow: hidden;
+        }
+
+        canvas {
+            z-index: -1;
+            position: absolute;
+        }
+    </style>
+    <script src="~/easyui/jquery.min.js"></script>
+    <script src="~/Scripts/login/verificationNumbers.js"></script>
+    <script src="~/Scripts/login/Particleground.js"></script>
+    <script>
+        $(document).ready(function () {
+            //粒子背景特效
+            $('body').particleground({
+                dotColor: '#5cbdaa',
+                lineColor: '#5cbdaa'
+            });
+            //验证码
+            createCode();
+
+            //测试提交，对接程序删除即可
+            $(".submit_btn").click(function () {
+                var codecheck = validate();
+                if (codecheck == false) {
+                    return;
+                }
+               
+                var obj = {};
+                obj.username = $.trim($("#username").val());
+                obj.password = $.trim($("#password").val());
+
+                //obj.code=$.trim($("#code").val());
+                //$.post("/home/loginckeck", obj, function (data) {
+                //    if (data.statu == 0 || data.statu == 2) {
+                //        alert(data.msg);
+                //    } else {
+                //        location.href = data.msg;
+                //    }
+
+                //}, 'json');
+                $.ajax({
+                    type: "GET",
+                    url: "/home/loginckeck",
+                    data: obj,
+                    dataType: "json",
+                    success: function (data) {
+                        if (data.statu == 0 || data.statu == 2) {
+                            alert(data.msg);
+                        } else {
+                            location.href = data.msg;
+                        }
+                    },
+                    error: function () {
+                        alert("出错");
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <canvas class="pg-canvas" width="1670" height="718"></canvas>
+    <dl class="admin_login">
+        <dt>
+            <strong>管理平台</strong>
+            <em>Management System</em>
+        </dt>
+        <dd class="user_icon">
+            <input placeholder="账号" id="username" class="login_txtbx" type="text">
+        </dd>
+        <dd class="pwd_icon">
+            <input placeholder="密码" id="password" class="login_txtbx" type="password">
+        </dd>
+        <dd class="val_icon">
+            <div class="checkcode">
+                <input id="J_codetext" placeholder="验证码" maxlength="4" class="login_txtbx" type="text">
+                <canvas class="J_codeimg" id="myCanvas" onclick="createCode()">对不起，您的浏览器不支持canvas，请下载最新版浏览器!</canvas>
+            </div>
+            <input value="验证码核验" class="ver_btn" onclick="validate();" type="button">
+        </dd>
+        <dd>
+            <input value="立即登陆" class="submit_btn" type="button">
+        </dd>
+        <dd>
+            <p>© 2015-2016  版权所有</p>
+            <p>鄂B2-8998988-1</p>
+        </dd>
+    </dl>
+
+
+</body>
+</html>

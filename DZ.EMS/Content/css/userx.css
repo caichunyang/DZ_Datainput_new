@@ -1,0 +1,85 @@
+
+
+
+.box{
+	width:830px;
+	height:580px;
+	background-color:#ffffff;
+    margin-left:20px;
+	margin-top:20px;
+    
+}
+.user_img{
+	width:230px;
+	height:580px;
+	background-color:#3899fa;
+	float: left;
+	color:#ffffff;
+	text-align: center;
+     cursor:pointer;
+}
+.user_img img{
+	padding:30px 60.5px 10px 60.5px;
+}
+.user_message{
+	margin-top:25px;
+	font-size:24px;
+	line-height: 70px;
+      
+}
+.user_message li{
+	margin-top:10px;  	
+    cursor:pointer;
+}
+.user_message li a{
+	color:white;
+}
+.user_name{
+	font-size:20px;
+	
+}
+.box_1{
+	width:600px;
+	height:580px;
+	float: left;
+}
+/*my*/
+
+.userinfoul  {
+      padding:10px;
+       margin:10px 60px;
+       width:450px;
+}
+.userinfoul li {
+     text-align:left;
+     margin:10px;
+     height:30px;
+}
+.userinfoul li input {
+   border:1px solid #ccc;
+        height:24px;
+        width:200px;
+        padding:2px 6px;
+     float:right;
+}
+    .changpaw {
+       padding:10px;
+       margin:10px 40px;
+       /*border:1px solid #ccc;*/
+    }
+    .changpaw li {
+     text-align:left;
+     margin:10px;
+     height:30px;
+  
+    }
+    .changpaw li input{
+        border:1px solid #ccc;
+        height:24px;
+        width:200px;
+     float:right;
+
+    }
+    .box_1 {
+       display:none;
+    }

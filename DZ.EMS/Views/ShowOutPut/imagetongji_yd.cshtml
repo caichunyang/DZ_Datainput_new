@@ -1,0 +1,339 @@
+﻿@{
+    ViewBag.Title = "接收和返回统计";
+    Layout = null;
+}
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+@*<link href="~/Content/css/task.css" rel="stylesheet" />*@
+<link href="~/content/css/headfoot.css" rel="stylesheet" />
+<script src="~/Scripts/mycommon.js"></script>
+<style type="text/css">
+    /*body {
+            background: url(img/bg.png) top center no-repeat;
+            background-size: 100%  auto;
+        }*/
+    .mask_rec_up {
+        position: absolute;
+        top: 0px;
+        filter: alpha(opacity=60);
+        background-color: #777;
+        z-index: 1002;
+        left: 0px;
+        opacity: 0.5;
+    }
+
+    .container {
+        text-align: center;
+    }
+
+    .gif {
+        text-align: center;
+        vertical-align: middle;
+        opacity: 1;
+    }
+
+    .right {
+        float: right;
+        text-align: right;
+    }
+
+    .bor img {
+        display: block;
+        width: auto;
+        max-width: 100%;
+    }
+
+    #gridview {
+        width: 100%;
+        min-height: 500px;
+    }
+
+    #rec_table {
+        border-bottom: 1px solid #95B8E7;
+        border-left: 1px solid #95B8E7;
+        width: 100%;
+    }
+
+        #rec_table td {
+            text-align: center;
+            border-top: 1px solid #95B8E7;
+            border-right: 1px solid #95B8E7;
+            padding: 5px;
+            font-size: 16px;
+        }
+</style>
+
+<div class="container">
+    <div style="padding:5px"></div>
+
+    <ul class="chaxun">
+        <li><input type="button" value="今日" id="selectTodaybtn_rec_up" class="button_chaxun"></li>
+        <li><input type="button" value="昨天" id="selectYesterdaybtn_rec_up" class="button_chaxun"></li>
+
+        <li>开始日期:<input id="start_rec_up" class="easyui-datebox" editable="false"></li>
+        <li>
+            结束日期:  <input id="end_rec_up" class="easyui-datebox" editable="false">
+        </li>
+        <li><input type="button" value="查询" id="commit_rec_up" class="button_chaxun"></li>
+        @*<li><input type="button" value="查23点" id="commit_rec_up23" class="button_chaxun"></li>*@
+    </ul>
+    <div style="margin:0px 50px auto;  ">
+        <!--<div id="magazineGrid"></div>-->
+        <div style="min-height:300px;">
+            @*<div id="datagrid_rec_up"> </div>*@
+            <table id="rec_table" cellpadding="0" cellspacing="0">
+                <thead>
+                    <tr>
+                        <td>时段</td>
+                        <td colspan="2">昨23:00—23:59:59</td>
+                        <td colspan="2">00:00—08:59:59</td>
+                        <td colspan="2">09:00—16:59:59</td>
+                        <td colspan="2">17:00—18:59:59</td>
+                        <td colspan="2">19:00—19:59:59</td>
+                        <td colspan="2">20:00—20:59:59</td>
+                        <td colspan="2">21:00—21:59:59</td>
+                        <td colspan="2">22:00—22:59:59</td>
+                        <td colspan="5">当日合计</td>
+                        <td>在线人数</td>
+                    </tr>
+                    <tr>
+                        <td id="datestr">接/收</td>
+                        <td>接收</td>
+                        <td>上传</td>
+                        <td>接收</td>
+                        <td>上传</td>
+                        <td>接收</td>
+                        <td>上传</td>
+                        <td>接收</td>
+                        <td>上传</td>
+                        <td>接收</td>
+                        <td>上传</td>
+                        <td>接收</td>
+                        <td>上传</td>
+                        <td>接收</td>
+                        <td>上传</td>
+                        <td>接收</td>
+                        <td>上传</td>
+                        <td>接收</td>
+                        <td>上传</td>
+                        <td>待录</td>
+                        <td>待传</td>
+                        <td>逾期</td>
+                        <td colspan="2">人数</td>
+
+                    </tr>
+                </thead>
+
+                <tbody></tbody>
+            </table>
+            <br />
+            <div id="datagrid_rec_up23"> </div>
+
+        </div>
+    </div>
+    <!--创建一个遮罩-->
+    <div id="mask_rec_up" class="mask_rec_up"><div class="gif"><img src="img/wait.gif"></div></div>
+</div>
+<script type="text/javascript">
+    var array = {};
+    var interval; //调度器对象。
+    var canpost = "true" //默认可以提交
+    var start_rec_up; //开始时间
+    var end_rec_up; //结束时间
+    var DATE_FORMAT = /^[0-9]{4}-[0-1]?[0-9]{2}-[0-3]?[0-9]{2}$/; //用于判断日期格式是否正确
+    //获取窗口百分比的长度
+    function fixWidth(percent) {
+        return document.body.clientWidth * percent; //这里你可以自己做调整
+    }
+    function fixHeight(percent) {
+        return document.documentElement.clientHeight * percent; //这里你可以自己做调整
+    }
+    //检验日期格式是否正确
+    function checkdate(thedate) {
+        if (DATE_FORMAT.test(thedate)) {
+            // alert("您输入的日期格式正确");
+            return "true";
+        } else {
+            alert("抱歉，您输入的日期格式有误，正确格式应为 2016-01-01");
+            return "false";
+        }
+    }
+
+    $(function () {
+        //兼容火狐、IE8
+        //显示遮罩层
+        function showMask() {
+            $("#mask_rec_up").css("height", $(document).height());
+            $("#mask_rec_up").css("width", $(document).width());
+            $("#mask_rec_up").show();
+        }
+        //隐藏遮罩层
+        function hideMask() {
+            $("#mask_rec_up").hide();
+        }
+        //默认加载页面隐藏遮罩层
+        $("#mask_rec_up").hide();
+
+
+        // 禁止F5刷新
+        $(document).bind("keydown", function (e) {
+            e = window.event || e;
+            if (e.keyCode == 116) {
+                // alert("禁止F5刷新");
+                e.keyCode = 0;
+                return false;
+            }
+        });
+        $("#selectTodaybtn_rec_up").click(function () {
+
+            $("#start_rec_up").datebox("setValue", datenowstr());
+            $("#end_rec_up").datebox("setValue", datenowstr());
+            GetGridata(0);
+        });
+        $("#selectYesterdaybtn_rec_up").click(function () {
+
+
+            $("#start_rec_up").datebox("setValue", dateaddstr(-1));
+            $("#end_rec_up").datebox("setValue", dateaddstr(-1));
+            GetGridata(0);
+        });
+        //点击按钮提交
+        $("#commit_rec_up").click(function () {
+            GetGridata(0);
+        });
+        $("#commit_rec_up23").click(function () {
+            GetGridata(1);
+        });
+        function GetGridata(a) {
+
+            //如果两个录入框都有数据
+            if (canpost == "false") {
+                alert("你查询的速度过快,请喝杯茶稍等片刻再查询...");
+            } else {
+                //赋予日期变量
+                start_rec_up = $('#start_rec_up').datebox('getValue');
+                end_rec_up = $('#end_rec_up').datebox('getValue');
+                //判断日期格式是否正确
+                if (checkdate(start_rec_up) == "true" && checkdate(end_rec_up) == "true") {
+                    if (a) {
+                        postdata_devid23(start_rec_up, end_rec_up);
+                        canpost = "false";
+                    } else {
+                        postdata_users(start_rec_up, end_rec_up);
+                        canpost = "false";
+                    }
+
+                }
+            }
+        }
+        //定义计时器间隔
+        function timerun() {
+            // alert("启用定时器间隔");
+            interval = setInterval(timefun, 1000);
+        }
+        //计时器触发事件
+        function timefun() {
+            //  alert("定时器已触发");
+            canpost = "true";
+            clearInterval(interval);
+        }
+
+        function postdata_users(start_rec_up, end_rec_up) {
+            getnewtable(start_rec_up, end_rec_up);
+            ////隐藏遮罩层
+            //hideMask();
+            ////        //设置倒计时,防止刷单
+            timerun();
+
+            //// var allcount = 0;
+            //$("#datagrid_rec_up").datagrid({
+            //    //url: '/ShowOutPut/GetImage_rc_up',
+            //    url: '/ShowOutPut/GetImage_rc_up',
+            //    queryParams: { startdate: start_rec_up, enddate: end_rec_up, casekey: "yd" },
+            //    rownumbers: true,
+
+            //    columns: [[
+            //        { field: 'datestr', title: '日期', width: 100 },
+            //        { field: 'count1', title: '接收量', width: 100 },
+            //        { field: 'count2', title: '上传量', width: 100 }
+            //    ]],
+            //    onLoadError: function () {
+            //        alert("cw")
+            //    }
+            //    , onLoadSuccess: function (data) {
+            //        compute();
+            //    }
+            //});
+
+            //function compute() {//计算函数
+            //    var rows = $('#datagrid_rec_up').datagrid('getRows')//获取当前的数据行
+            //    var allcount = 0;
+            //    var allcount1 = 0;
+            //    for (var i = 0; i < rows.length; i++) {
+            //        allcount += parseInt(rows[i]['count1']);
+            //        allcount1 += parseInt(rows[i]['count2']);
+            //    }
+            //    //新增一行显示统计信息
+            //    $('#datagrid_rec_up').datagrid('appendRow', { datestr: '<b>统计</b>', count1: allcount, count2: allcount1 });
+
+            //}
+
+        }
+        function getnewtable(start_rec_up, end_rec_up) {//根据时间段统计上传接收
+
+            $.post("/ShowOutPut/GetImage_rc_up_Three", { start: start_rec_up, end: end_rec_up }, function (data) {
+                //$("#datestr").html( start_rec_up );
+                var ht = "";
+                $.each(data, function (index,item) {
+
+                    var array = item.split('_');
+
+                    //  start_rec_up = renamedate(start_rec_up);
+                     ht += "<tr>";//<td>" + start_rec_up + "</td>
+                    for (var i = 0; i < array.length; i++) {
+                        if (i == 0) {
+                            ht += "<td>" + renamedate(array[i]) + "</td>";
+                        } else {
+                            ht += "<td>" + array[i] + "</td>";
+                        }
+
+                    }
+                    ht += "</tr>";
+
+                });
+                
+                // var html = "<tr><td>" + array[0] + "</td><td>" + array[1] + "</td><td>" + array[2] + "</td><td>" + array[3] + "</td><td>" + array[4] + "</td><td>" + array[5] + "</td><td colspan='2'>" + array[6] + "</td></tr>"
+                $("#rec_table tbody").html(ht);
+            },'json');
+        }
+        function postdata_devid23(start_rec_up, end_rec_up) {
+            //隐藏遮罩层
+            hideMask();
+            //        //设置倒计时,防止刷单
+            timerun();
+            // var allcount = 0;
+            $("#datagrid_rec_up23").datagrid({
+                //url: '/ShowOutPut/GetImage_rc_up',
+                url: '/ShowOutPut/GetImage_rc_up23',
+                queryParams: { startdate: start_rec_up, enddate: end_rec_up },
+                rownumbers: true,
+                columns: [[
+                    { field: 'count1', title: '接收量', width: 100 },
+                    { field: 'count2', title: '上传量', width: 100 },
+                    { field: 'datestr', title: '退单量', width: 100 }
+                ]],
+                onLoadError: function () {
+                    alert("cw")
+                }
+            });
+
+        }
+        //默认执行请求
+        // postdata_users();
+    });
+</script>

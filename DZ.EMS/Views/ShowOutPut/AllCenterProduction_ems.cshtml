@@ -1,0 +1,328 @@
+﻿@{
+    ViewBag.Title = "AllCenterProduction";
+    Layout = null;
+}
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+@*<link href="~/Content/css/task.css" rel="stylesheet" />*@
+<link href="~/content/css/headfoot.css" rel="stylesheet" />
+<script src="~/Scripts/mycommon.js"></script>
+<style type="text/css">
+    /*body {
+            background: url(img/bg.png) top center no-repeat;
+            background-size: 100%  auto;
+        }*/
+    .maskall_center {
+        position: absolute;
+        top: 0px;
+        filter: alpha(opacity=60);
+        background-color: #777;
+        z-index: 1002;
+        left: 0px;
+        opacity: 0.5;
+    }
+
+    .container {
+        text-align: center;
+    }
+
+    .gif {
+        text-align: center;
+        vertical-align: middle;
+        opacity: 1;
+    }
+
+    .right {
+        float: right;
+        text-align: right;
+    }
+
+    .bor img {
+        display: block;
+        width: auto;
+        max-width: 100%;
+    }
+
+    #gridview {
+        width: 100%;
+        min-height: 500px;
+    }
+</style>
+
+<div class="container">
+    <div style="padding:5px"></div>
+
+    <ul class="chaxun">
+        <li><input type="button" value="今日" id="selectTodaybtnall_center" class="button_chaxun"></li>
+        <li><input type="button" value="昨天" id="selectYesterdaybtnall_center" class="button_chaxun"></li>
+
+        <li>开始日期:<input id="startall_center" class="easyui-datebox" editable="false"></li>
+        <li>
+            结束日期:  <input id="endall_center" class="easyui-datebox" editable="false">
+        </li>
+        <li>
+            选择中心:<input id="objcombox" class="easyui-combobox" data-options="valueField:'id',editable:false,textField:'text',url:'/common/GetObjectCombobox/0'" />
+        </li>
+        <li>
+            扫描中心:<input id="up_objcombox" class="easyui-combobox" data-options="valueField:'id',editable:false,textField:'text',url:'/common/GetObjectCombobox/1'" />
+        </li>
+        <li><input type="button" value="中心产量" id="commitall_center" class="button_chaxun"></li>
+        <li><input type="button" value="扫描单量" id="commitbarnum" class="button_chaxun"></li>
+    </ul>
+    <div style="margin:0px 50px auto;  ">
+        <!--<div id="magazineGrid"></div>-->
+        <div style="min-height:300px;">
+           <div id="tips1"></div>
+            <div id="datagridall_center"> </div>
+            <div id="tips2"></div>
+            <div id="datagridall_barcode"> </div>
+        </div>
+    </div>
+    <!--创建一个遮罩-->
+    <div id="maskall_center" class="maskall_center"><div class="gif"><img src="/img/wait.gif"></div></div>
+</div>
+<script type="text/javascript">
+    var array = {};
+    var interval; //调度器对象。
+    var canpost = "true" //默认可以提交
+    var startall_center; //开始时间
+    var endall_center; //结束时间
+    var DATE_FORMAT = /^[0-9]{4}-[0-1]?[0-9]{2}-[0-3]?[0-9]{2}$/; //用于判断日期格式是否正确
+    //获取窗口百分比的长度
+    function fixWidth(percent) {
+        return document.body.clientWidth * percent; //这里你可以自己做调整
+    }
+    function fixHeight(percent) {
+        return document.documentElement.clientHeight * percent; //这里你可以自己做调整
+    }
+    //检验日期格式是否正确
+    function checkdate(thedate) {
+        if (DATE_FORMAT.test(thedate)) {
+            // alert("您输入的日期格式正确");
+            return "true";
+        } else {
+            alert("抱歉，您输入的日期格式有误，正确格式应为 2016-01-01");
+            return "false";
+        }
+    }
+
+    $(function () {
+        //兼容火狐、IE8
+        //显示遮罩层
+        function showMask() {
+            $("#maskall_center").css("height", $(document).height());
+            $("#maskall_center").css("width", $(document).width());
+            $("#maskall_center").show();
+        }
+        //隐藏遮罩层
+        function hideMask() {
+            $("#maskall_center").hide();
+        }
+        //默认加载页面隐藏遮罩层
+        $("#maskall_center").hide();
+
+
+        // 禁止F5刷新
+        $(document).bind("keydown", function (e) {
+            e = window.event || e;
+            if (e.keyCode == 116) {
+                // alert("禁止F5刷新");
+                e.keyCode = 0;
+                return false;
+            }
+        });
+        $("#selectTodaybtnall_center").click(function () {
+      
+            $("#startall_center").datebox("setValue", datenowstr());
+            $("#endall_center").datebox("setValue", datenowstr());
+            GetGridata(1);
+        });
+        $("#selectYesterdaybtnall_center").click(function () {
+           
+            $("#startall_center").datebox("setValue", dateaddstr(-1));
+            $("#endall_center").datebox("setValue", dateaddstr(-1));
+            GetGridata(1);
+        });
+        //点击按钮提交
+        $("#commitall_center").click(function () {
+            GetGridata(1);
+        });
+        
+
+        $("#commitbarnum").click(function () {
+            GetGridata(0);
+        });
+        function GetGridata(a) {
+            
+            //如果两个录入框都有数据
+            if (canpost == "false") {
+                alert("你查询的速度过快,请喝杯茶稍等片刻再查询...");
+            } else {
+                //赋予日期变量
+                startall_center = $('#startall_center').datebox('getValue');
+                endall_center = $('#endall_center').datebox('getValue');
+               
+                //判断日期格式是否正确
+                if (checkdate(startall_center) == "true" && checkdate(endall_center) == "true") {
+                    if (a) {
+                        var objid = $("#objcombox").combobox("getValue");
+                       postdata_users(startall_center, endall_center, objid);
+                        canpost = "false";
+                    } else {
+                        var objid = $("#up_objcombox").combobox("getValue");
+                       
+                       postdata_centerbarnum(startall_center, endall_center, objid);
+                        canpost = "false";
+                    }
+                   
+                }
+            }
+        }
+        //定义计时器间隔
+        function timerun() {
+            // alert("启用定时器间隔");
+            interval = setInterval(timefun, 1000);
+        }
+        //计时器触发事件
+        function timefun() {
+            //  alert("定时器已触发");
+            canpost = "true";
+            clearInterval(interval);
+        }
+
+        function postdata_users(startall_center, endall_center, objectid) {
+            
+            //隐藏遮罩层
+            hideMask();
+            //        //设置倒计时,防止刷单
+            timerun();
+            // var allcount = 0;
+            $("#datagridall_center").datagrid({
+                //url: '/ShowOutPut/GetImage_rc_up',
+                url: '/ShowOutPut/AllCenterProduction_emsTJ',
+                queryParams: { startdate: startall_center, enddate: endall_center,objectid:objectid},
+                fitColumns: true,//"寄件人姓名","寄件人电话","收件人姓名","收件人电话","收件人地址","混合字段","物品重量"
+                columns: [[
+                  //{
+                  //    field: 'id', title: '中心编号', width: 100
+
+                  //},
+                    { field: 'type1', title: '中心名称', width: 100 }
+                    , { field: 'type2', title: '寄件人姓名', width: 100 },
+                     {
+                         field: 'type3', title: '寄件人电话', width: 100
+                     },
+                    { field: 'type4', title: '收件人姓名', width: 100 },
+                    { field: 'type5', title: '收件人电话', width: 100 },
+                    { field: 'type6', title: '收件人地址', width: 100 },
+                    { field: 'type7', title: '混合字段', width: 100 },
+                     { field: 'type8', title: '物品重量', width: 100 },
+                     { field: 'sum', title: '合计', width: 100 },
+                    { field: 'checknum', title: '检查数量', width: 100 },
+                  { field: 'checkerrnum', title: '检查更正数量', width: 100 },
+                   { field: 'errnum', title: '错误数量', width: 100 },
+                   { field: 'backnum', title: '退回量', width: 100 },
+                    { field: 'points', title: '积分', width: 100 }
+                ]],
+                onLoadError: function () {
+                    alert("cw")
+                }
+        , onLoadSuccess: function (data) {
+            compute();
+            $("#tips1").html("<h2>中心产量</h2>");
+        }
+            });
+
+            function compute() {//计算函数
+                var rows = $('#datagridall_center').datagrid('getRows')//获取当前的数据行
+                var newrow = {
+                    type1: "<b>合计</b>",
+                    type2: 0,
+                    type3: 0,
+                    type4: 0,
+                    type5: 0,
+                    type6: 0,
+                     type7: 0,
+                    type8: 0,
+                    sum: 0,
+                    checknum: 0,
+                    checkerrnum:0,
+                    errnum: 0,
+                    backnum: 0
+                };
+                for (var i = 0; i < rows.length; i++) {
+
+                    newrow.type2 += parseInt(rows[i]['type2']);
+                    newrow.type3 += parseInt(rows[i]['type3']);
+                    newrow.type4 += parseInt(rows[i]['type4']);
+                    newrow.type5 += parseInt(rows[i]['type5']);
+                    newrow.type6 += parseInt(rows[i]['type6']);
+                    newrow.type7 += parseInt(rows[i]['type7']);
+                    newrow.type8 += parseInt(rows[i]['type8']);
+                    newrow.sum += parseInt(rows[i]['sum']);
+                    newrow.checknum += parseInt(rows[i]['checknum']);
+                    newrow.checkerrnum += parseInt(rows[i]['checkerrnum']);
+                    newrow.errnum += parseInt(rows[i]['errnum']);
+                    newrow.backnum += parseInt(rows[i]['backnum']);
+                }
+            
+                //新增一行显示统计信息
+                $('#datagridall_center').datagrid('appendRow', newrow);
+
+            }
+
+        }
+        //默认执行请求
+        function postdata_centerbarnum(startall_center, endall_center, objectid) {
+           
+            //隐藏遮罩层
+            hideMask();
+            //        //设置倒计时,防止刷单
+            timerun();
+            // var allcount = 0;
+            $("#datagridall_barcode").datagrid({
+                //url: '/ShowOutPut/GetImage_rc_up',
+                url: '/ShowOutPut/CenterBarcodeNum_ems',
+                queryParams: { startdate: startall_center, enddate: endall_center,objectid:objectid },
+                fitColumns: true,//"寄件人姓名","寄件人电话","收件人姓名","收件人电话","收件人地址","混合字段","物品重量"
+                columns: [[
+                  {
+                      field: 'id', title: '中心编号', width: 100
+                  },
+                    { field: 'type1', title: '中心名称', width: 100 }
+                    , { field: 'type2', title: '日期', width: 100 },
+                     {
+                         field: 'type3', title: '单量', width: 100
+                     }
+                ]],
+                onLoadError: function () {
+                    alert("cw")
+                }
+                , onLoadSuccess: function (data) {
+                    compute2();
+                    $("#tips2").html("<h2>扫描上传单量</h2>")
+                }
+            });
+
+            function compute2() {//计算函数
+                var rows = $('#datagridall_barcode').datagrid('getRows')//获取当前的数据行
+                var newrow = {
+                    type1: "<b>合计</b>",
+                    type3: 0
+                };
+                for (var i = 0; i < rows.length; i++) {
+
+                    newrow.type3 += parseInt(rows[i]['type3']);
+                }
+                //新增一行显示统计信息
+                $('#datagridall_barcode').datagrid('appendRow', newrow);
+
+            }
+        }
+    });
+</script>

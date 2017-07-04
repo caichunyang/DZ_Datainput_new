@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+    <startup> 
+        <supportedRuntime version="v4.0" sku=".NETFramework,Version=v4.5" />
+    </startup>
+  <connectionStrings>
+    <add name="DefaultConnection" connectionString="Data Source=(LocalDb)\v11.0;Initial Catalog=aspnet-DZ.EMS-20160914161632;Integrated Security=SSPI;AttachDBFilename=|DataDirectory|\aspnet-DZ.EMS-20160914161632.mdf" providerName="System.Data.SqlClient" />
+    <add name="Connection" connectionString="Data Source=114.215.16.58/sbcj;User ID=sbcj;PassWord=whdztech" />
+    <!--118.178.191.196-->
+    <!--114.215.16.58-->
+    <!--<add name="Connection_pa" connectionString="Data Source=119.97.244.109/sbcj;User ID=sbcj;PassWord=whdztech" />-->
+    <!--平安-->
+    <add name="Connection_pa" connectionString="Data Source=114.215.16.58/sbcj;User ID=sbcj;PassWord=whdztech" />
+    <!--平安-->
+  </connectionStrings>
+</configuration>

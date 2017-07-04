@@ -1,0 +1,58 @@
+﻿@{
+    ViewBag.Title = "识图录入";
+}
+<script>
+    $(function () {
+
+        $('#tt').tabs({
+            //tabPosition: "left",
+           tabHeight: "30",
+           headerWidth: "120",
+           border: "1",
+            showHeader:true
+        });
+        //$('#tt').tabs('add', {
+        //    title: '邮政',
+        //    //content: 'Tab Body',
+        //    href: "/input/yz",
+        //    closable: false,
+
+        //    tools: [{
+        //        iconCls: 'icon-mini-refresh',
+        //        handler: function () {
+        //            alert('refresh');
+        //        }
+        //    }]
+        //}).tabs('add', {
+        //    title: '邮政',
+        //    //content: 'Tab Body',
+        //    href: "/input/yz",
+        //    closable: false,
+
+        //    tools: [{
+        //        iconCls: 'icon-mini-refresh',
+        //        handler: function () {
+        //            alert('refresh');
+        //        }
+        //    }]
+        //});
+    });
+</script>
+<div style="width:100%; background:white;">
+    <div id="tt" class="easyui-tabs" style="width:1000px; margin:0 auto;">
+        @*<div title="Tab1" style="padding:20px;display:none;">
+                tab1
+            </div>*@
+        @foreach (DZ.MODEL.DZ_MODULE item in @ViewBag.tabs)
+        {
+            var href = "/" + @item.Controler + "/" + @item.Action;
+            <div title="@item.Title" data-options="closable:false,href:'@href'" style="overflow:auto;padding:20px;display:none;">
+
+            </div>
+        }
+
+        @*<div title="韵达" data-options="iconCls:'icon-reload',closable:false,href:'/input/yd'" style="padding:20px;display:none;">
+
+            </div>*@
+    </div>
+</div>

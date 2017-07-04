@@ -1,0 +1,185 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = null;
+}
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+@*<link href="~/Content/css/task.css" rel="stylesheet" />*@
+<link href="~/content/css/headfoot.css" rel="stylesheet" />
+<script src="~/Scripts/mycommon.js"></script>
+<div class="container">
+    <div style="padding:5px"></div>
+
+    <ul class="chaxun">
+        <li><input type="button" value="今日" id="selectTodaybtnexcel_ems" class="button_chaxun"></li>
+        <li><input type="button" value="昨天" id="selectYesterdaybtnexcel_ems" class="button_chaxun"></li>
+       
+        <li>查询日期:<input id="startexcel_ems" class="easyui-datebox" editable="false"></li>
+        @*<li>
+                结束日期:  <input id="endexcel_ems" class="easyui-datebox" editable="false">
+            </li>*@
+        <li><input type="button" value="查询" id="commitexcel_ems" class="button_chaxun"></li>
+    </ul>
+    <div style="margin:0px 50px auto;  ">
+        <!--<div id="magazineGrid"></div>-->
+        <div style="min-height:300px;">
+            <div id="datagridexcel_ems"> </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var array = {};
+    var interval; //调度器对象。
+    var canpost = "true" //默认可以提交
+    var startexcel_ems; //开始时间
+    var endexcel_ems; //结束时间
+    var DATE_FORMAT = /^[0-9]{4}-[0-1]?[0-9]{2}-[0-3]?[0-9]{2}$/; //用于判断日期格式是否正确
+    //获取窗口百分比的长度
+    function fixWidth(percent) {
+        return document.body.clientWidth * percent; //这里你可以自己做调整
+    }
+    function fixHeight(percent) {
+        return document.documentElement.clientHeight * percent; //这里你可以自己做调整
+    }
+    //检验日期格式是否正确
+    function checkdate(thedate) {
+        if (DATE_FORMAT.test(thedate)) {
+            // alert("您输入的日期格式正确");
+            return "true";
+        } else {
+            alert("抱歉，您输入的日期格式有误，正确格式应为 2016-01-01");
+            return "false";
+        }
+    }
+
+    $(function () {
+        //兼容火狐、IE8
+        //显示遮罩层
+        function showMask() {
+            $("#maskexcel_ems").css("height", $(document).height());
+            $("#maskexcel_ems").css("width", $(document).width());
+            $("#maskexcel_ems").show();
+        }
+        //隐藏遮罩层
+        //function hideMask() {
+        //    $("#maskexcel_ems").hide();
+        //}
+        //默认加载页面隐藏遮罩层
+        //$("#maskexcel_ems").hide();
+
+
+        // 禁止F5刷新
+        $(document).bind("keydown", function (e) {
+            e = window.event || e;
+            if (e.keyCode == 116) {
+                // alert("禁止F5刷新");
+                e.keyCode = 0;
+                return false;
+            }
+        });
+        $("#selectTodaybtnexcel_ems").click(function () {
+            $("#startexcel_ems").datebox("setValue", datenowstr());
+            GetGridata();
+        });
+        $("#selectYesterdaybtnexcel_ems").click(function () {
+            $("#startexcel_ems").datebox("setValue", dateaddstr(-1));
+            GetGridata();
+        });
+        //点击按钮提交
+        $("#commitexcel_ems").click(function () {
+            GetGridata();
+        });
+        function GetGridata() {
+            //如果两个录入框都有数据
+            if (canpost == "false") {
+                alert("你查询的速度过快,请喝杯茶稍等片刻再查询...");
+            } else {
+                //赋予日期变量
+                startexcel_ems = $('#startexcel_ems').datebox('getValue');
+            
+                //  endexcel_ems = $('#endexcel_ems').datebox('getValue');
+                //判断日期格式是否正确
+                if (checkdate(startexcel_ems) == "true") {// && checkdate(endexcel_ems) == "true"
+                    
+                    my_postdata_users(startexcel_ems);//endexcel_ems
+                    canpost = "false";
+                }
+            }
+        }
+      
+    });
+    //定义计时器间隔
+    function timerun() {
+        // alert("启用定时器间隔");
+        interval = setInterval(timefun, 1000);
+    }
+    //计时器触发事件
+    function timefun() {
+        //  alert("定时器已触发");
+        canpost = "true";
+        clearInterval(interval);
+    }
+    var myobjid = -1;
+    var serverobjid = "@ViewBag.objid";
+    var myobjname = "@ViewBag.objname";
+    if (serverobjid>=0) {
+        myobjid = serverobjid;
+    }
+    function  my_postdata_users(startexcel_ems) {//endexcel_ems
+       
+        //隐藏遮罩层
+        //hideMask();
+        //        //设置倒计时,防止刷单
+        timerun();
+        // var allcount = 0;
+        //alert(startexcel_ems);
+        $("#datagridexcel_ems").datagrid({
+            //url: '/ShowOutPut/GetImage_rc_up',
+            url: '/ExcelOutCenter/GetBoxNum',
+            queryParams: { thedate: startexcel_ems, objectid: myobjid },
+            rownumbers: true,
+            columns: [[
+                {
+                    field: 'boxno', title: '批次号', width: 100
+                },
+                { field: 'a', title: '等待录入(切片)', width: 100 }
+                , { field: 'b', title: '等待质检(切片)', width: 100 },
+                 {
+                     field: 'c', title: '已经质检无错误(切片)', width: 100
+                 },
+                { field: 'd', title: '已经质检已改正(切片)', width: 100 },
+                { field: 'e', title: '上传单量(整单)', width: 100 },
+                {
+                    field: 'sum2', title: '操作', width: 300, formatter: function (value, row, index) {
+                        var btn = "<a class='editcls' onclick=\"my_downloadExcel(" + index + ",0)\" href='javascript:void(0)'>下载正常数据</a>";
+                        btn += "&nbsp;&nbsp;&nbsp;&nbsp;<a class='editcls' onclick=\"my_downloadExcel(" + index + ",1)\" href='javascript:void(0)'>下载异常数据</a>"
+                        return btn;
+                    }
+                }
+            ]],
+            onLoadError: function () {
+                alert("cw")
+            }
+            , onLoadSuccess: function (data) {
+                // compute();
+            }
+        });
+    }
+ 
+    function my_downloadExcel(index,type) {
+        // if ($('#my_datagriduser').datagrid('validateRow', index)) {
+        var row = $('#datagridexcel_ems').datagrid('getRows')[index];
+        var obj = { type: type, boxno: row.boxno,objectid:myobjid,objectname:myobjname }
+       
+        $.post("/ExcelOutCenter/Download", obj, function (data) {
+          //  alert(data);
+            window.location.href = data;
+        });
+        // }
+    }
+</script>

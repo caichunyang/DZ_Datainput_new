@@ -1,0 +1,352 @@
+﻿@{
+    ViewBag.Title = "邮政";
+  //  Layout = "~/Views/Shared/_Layout.cshtml";
+    Layout = null;
+}
+
+@*<link href="~/Content/css/entering.css" rel="stylesheet" />*@
+
+<div class="content" style="margin:10px auto;">
+    @*<div class="content_bt" >
+        识图录入
+        <span>sfsdf</span>
+    </div>*@
+  @*<div style="border:1px solid red; width:120px; height:200px; float:left; ">
+      <ul id="leftnav">
+          <li>sddfsdf</li>
+          <li>sddfsdf</li>
+          <li>sddfsdf</li>
+      </ul>
+  </div>*@
+    <div class="content_box">
+        <div class="img">
+            <img id="img_show" src="">
+        </div>
+        <ul class="location">
+            <li>目的城市：</li>
+            <li>收货地址：</li>
+        </ul>
+        <ul class="location" style=" display:none;">
+            <li>目的城市：</li>
+            <li>收货地址：</li>
+        </ul>
+        <ul class="text">
+            <li><input type="text" id="addrtitle-sfqx" value=""></li>
+            <li><input type="text" id="addrtitle-xzjd"></li>
+
+        </ul>
+
+        <input type="submit" id="commit" class="submit" value="请求数据">
+
+    </div>
+
+</div>
+<!--创建一个遮罩-->
+<div id="mask" class="mask"><div class="gif"><img src="~/Images/wait.gif"></div></div>
+
+<script src="js/classie.js"></script>
+<script>
+        (function () {
+            // trim polyfill : https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/Trim
+            if (!String.prototype.trim) {
+                (function () {
+                    // Make sure we trim BOM and NBSP
+                    var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
+                    String.prototype.trim = function () {
+                        return this.replace(rtrim, '');
+                    };
+                })();
+            }
+
+            [].slice.call(document.querySelectorAll('input.input__field')).forEach(function (inputEl) {
+                // in case the input is already filled..
+                if (inputEl.value.trim() !== '') {
+                    classie.add(inputEl.parentNode, 'input--filled');
+                }
+
+                // events:
+                inputEl.addEventListener('focus', onInputFocus);
+                inputEl.addEventListener('blur', onInputBlur);
+            });
+
+            function onInputFocus(ev) {
+                classie.add(ev.target.parentNode, 'input--filled');
+            }
+
+            function onInputBlur(ev) {
+                if (ev.target.value.trim() === '') {
+                    classie.remove(ev.target.parentNode, 'input--filled');
+                }
+            }
+        })();
+</script>
+
+<script type="text/javascript">
+    var imgonload = "true";  //用于判断图片是否加载完成
+    var oldaddress;
+    var newaddress;
+    var inputusername;
+    var imageid;
+    var array = {};
+    var interval; //调度器对象。
+    var canpost = "true" //默认可以提交
+    $(document).ready(function () {
+        $("#img_show").load(function () {
+            if (imgonload == "false") {
+                imgonload = "true";
+              //  alert("加载完成！");
+            }
+        });
+        //  alert(newaddress);
+        //兼容火狐、IE8
+        //显示遮罩层
+        function showMask() {
+            $("#mask").css("height", $(document).height());
+            $("#mask").css("width", $(document).width());
+            $("#mask").show();
+        }
+        //隐藏遮罩层
+        function hideMask() {
+            $("#mask").hide();
+        }
+
+        //默认加载页面隐藏遮罩层
+        $("#mask").hide();
+
+        //安全退出
+        $("#safeexit").click(function () {
+            //开始请求服务器数据
+            $.ajax({
+                type: "POST",
+                url: "YunDaInput.aspx",
+                dataType: "html",
+                data: "type=safeexit",
+                beforeSend: function () {
+                    //显示遮罩层
+                    showMask();
+                    //图像改为加载中
+                    $("#img_show").attr('src', "img/img_wait.gif");
+                    // alert("我要开始提交拉");
+                },
+                success: function (result) {
+                    //隐藏遮罩层
+                    hideMask();
+                    array = result.split("|");
+                    alert(array[1]);
+                    window.location.href = "/login.aspx";
+                },
+                error: function () {
+                    //隐藏遮罩层
+                    hideMask();
+                    alert("发送数据失败,退出失败");
+                }
+            });
+        });
+
+        //收件地址敲回车后自动提交
+        $("#addrtitle-xzjd").keypress(function (e) {
+            if (e.keyCode == 13) {
+                //如果两个录入框都有数据
+                if ($.trim($("#addrtitle-sfqx").val()) != "" && $.trim($("#addrtitle-xzjd").val()) != "") {
+                    if (imgonload == "true") {
+                        //开始提交
+                        inputimage();
+                    } else {alert("图片没有显示,无法提交,请等待图片显示...")}
+                }
+            }
+        });
+        //禁止F5刷新
+        //$(document).bind("keydown", function (e) {
+        //    e = window.event || e;
+        //    if (e.keyCode == 116) {
+        //        // alert("禁止F5刷新");
+        //            e.keyCode = 0;
+        //            return false;
+        //    }
+        //});
+
+        //点击按钮提交
+        $("#commit").click(function () {
+            //如果两个录入框都有数据
+            if ($.trim($("#addrtitle-sfqx").val()) != "" && $.trim($("#addrtitle-xzjd").val()) != "" || $("#commit").val()=="请求数据") {
+                if (canpost == "false") {
+                    alert("你提交的速度过快,请稍等几秒钟...");
+                }
+                else
+                {
+                    if (imgonload == "true") {
+                        //开始提交
+                        inputimage();
+                        canpost = "false";
+                    } else { alert("图片没有显示,无法提交,请等待图片显示...") }
+                }
+            }
+        });
+
+        //定义计时器间隔
+        function timerun() {
+           // alert("启用定时器间隔");
+            interval = setInterval(timefun, 3000);
+        }
+        //计时器触发事件
+        function timefun() {
+          //  alert("定时器已触发");
+            canpost = "true";
+            clearInterval(interval);
+
+        }
+        var regphone = /^1[34578]\d{9}$/;//手机号码正则
+        var regname = /^[a-zA-Z\u4e00-\u9fa5]+$/;//字母或汉字//^[a-zA-Z0-9\u4e00-\u9fa5]+$
+        var regaddress = /^[a-zA-Z\u4e00-\u9fa5]+$/;//字母或汉字//^[a-zA-Z0-9\u4e00-\u9fa5]+$
+        var adrKeyarry = ["省", "市", "县", "区"];
+        var regweight = /[0-9]+\.?[0-9]{0,2}/;
+        var illegalKey = ["死", "妈的", "娘的", "法轮", "上访", "太平间"];
+        function checkaddr(addr) {
+            $.each(adrKeyarry, function (i, item) {
+                if (addr.indexOf(item)>=0) {
+                    return true;
+                }
+            });
+            return true;
+        }
+        function checkaddress(str) {//检查非法字串 及非法字符
+            var result = { type1: 0, msg1: "通过", type2: 0, msg2: "通过", type3: 0, msg3: "通过" };//0 正常 1:异常
+            if (!regaddress.test(str)) {
+                result.type1 = 1; result.msg1 = "含有非法字符";
+            }
+            ///////////////////////////
+            var illegalarry = [];
+            $.each(illegalKey, function (i, item) {
+                if (str.indexOf(item) >= 0) {
+                    illegalarry.push(item);
+                }
+            });
+            if (illegalarry.length > 0) {
+                result.type2 = 1; result.msg2 = "包含 " + illegalarry.toString() + " 敏感词汇";
+            }
+            /////////////////////////////
+            var keyarry = [];
+            $.each(adrKeyarry, function (i, item) {
+                if (str.indexOf(item) < 0) {
+
+                    if (item == "县") {
+                        return false;
+                    }
+                    keyarry.push(item);
+                }
+            });
+            if (keyarry.length>0) {
+                result.type3 = 1; result.msg3 = "缺少 "+keyarry.toString()+" 关键字";
+            }
+            //////////////////////////
+           return result;
+        }
+        function inputimage() {
+
+            var datastr1 = $.trim($("#addrtitle-sfqx").val());
+            var datastr2 = $.trim($("#addrtitle-xzjd").val());
+            alert(checkaddress(datastr1).msg1);
+            alert(checkaddress(datastr1).msg2);
+            alert(checkaddress(datastr1).msg3);
+            //开始拼接地址字符串
+            newaddress = datastr1 + "<link>" + datastr2;
+
+
+            if (checkaddr(newaddress)) {
+
+            }
+            newaddress = escape(newaddress);
+            //初始化录入框
+            $("#sfqx").text("");
+            $("#xzjd").text("");
+
+            $("#addrtitle-sfqx").val("")
+            $("#addrtitle-xzjd").val("")
+
+            //设置第一个输入框为焦点
+            $("#addrtitle-sfqx").focus().select();
+
+            //开始请求服务器数据
+            $.ajax({
+                type: "POST",
+                url: "YunDaInput.aspx",
+                dataType: "html",
+                data: "type=inputimage&newaddress=" + newaddress + "&imageid=" + imageid,
+                beforeSend: function () {
+                    //显示遮罩层
+                    showMask();
+                    //图像改为加载中
+                    $("#img_show").attr('src', "/img/img_wait.gif");
+                    // alert("我要开始提交拉");
+                },
+                success: function (result) {
+                    //隐藏遮罩层
+                    hideMask();
+                    //设置倒计时,防止刷单
+                    timerun();
+                    //缩回录入项目
+                    // $(".initclass").removeClass("input--filled");
+                    //转换为json对象
+                   // alert( result );
+                    var data = eval("(" +  result  + ")");
+                    if (data.Result == 'error') {
+                        alert(data.ReturnStr);
+                        $("#img_show").attr('src', "/img/no_img.jpg");
+                        imageid = 0;
+                        $("#commit").val("请求数据");
+                        return false;
+                    } //如果返回错误弹出错误提示
+                    if (data.Result == 'nologin') {
+                        alert(data.ReturnStr);
+                        window.navigate("login.aspx");
+                        $("#img_show").attr('src', "/img/no_img.jpg");
+                        imageid = 0;
+                        $("#commit").val("请求数据");
+                        return false;
+                    } else {
+                        //获取图像ImageID
+                        imageid = data.ReturnStr[0].ImageID
+                        $("#commit").val("提交");
+                        // alert(imageid);
+                        //标记图片为默认未加载状态
+                        imgonload = "false";
+                        $("#img_show").attr('src', "http://119.97.244.109:9995/" + data.ReturnStr[0].ImagePath);
+                        //$(".addrtitle").val("");
+
+                        //显示录入人信息
+                        $("#userid").text(data.ReturnStr[0].InputUserID);
+
+                        //在线人数,产量,登录时间
+                        $("#online").text("在线人数：" + data.ReturnStr[0].OnlineInputPeople)
+                        $("#thenum").text("今日已录单量：" + data.ReturnStr[0].InputNum)
+                        $("#needinputnum").text("待录单量：" + data.ReturnStr[0].NeedInputCount)
+                        $("#logintime").text("登录时间：" + data.ReturnStr[0].LoginTime)
+                        $("#realname").text("当前用户：" + data.ReturnStr[0].UserName)
+
+                        //开始分割目的城市和收件地址
+                       // alert(data.ReturnStr[0].InputValues);
+                        var array2 = data.ReturnStr[0].InputValues.split("<link>");
+                        $("#sfqx").text(array2[0]);
+                        $("#xzjd").text(array2[1]);
+
+                        $("#addrtitle-sfqx").val(array2[0])
+                        $("#addrtitle-xzjd").val(array2[1])
+                    }
+                },
+                error: function () {
+                    //隐藏遮罩层
+                    hideMask();
+                    //设置倒计时,防止刷单
+                    timerun();
+                    alert("获取数据失败");
+                    $("#img_show").attr('src', "/img/no_img.jpg");
+                    imageid = 0;
+                    $("#commit").val("请求数据");
+                }
+            });
+            //    showMask();
+        }
+        //默认执行请求
+       // inputimage();
+    });
+</script>

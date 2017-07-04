@@ -1,0 +1,33 @@
+﻿@{
+    ViewBag.Title = "管理页";
+      Layout = null;
+}
+
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+@*<link href="~/Content/css/task.css" rel="stylesheet" />*@
+<link href="~/content/css/headfoot.css" rel="stylesheet" />
+<script src="~/Scripts/mycommon.js"></script>
+<div style="margin:0 auto; background:white;" class="background">
+    <div id="tt" class="easyui-tabs" >
+        @*<div title="Tab1" style="padding:20px;display:none;">
+                tab1
+            </div>*@
+        @foreach (DZ.MODEL.DZ_MODULE item in @ViewBag.tabs)
+        {
+            var href = "/" + @item.Controler + "/" + @item.Action;
+            <div title="@item.Title" data-options="closable:false,href:'@href'" style="overflow:auto;padding:20px;display:none;">
+
+            </div>
+        }
+
+        @*<div title="韵达" data-options="iconCls:'icon-reload',closable:false,href:'/input/yd'" style="padding:20px;display:none;">
+
+            </div>*@
+    </div>
+</div>

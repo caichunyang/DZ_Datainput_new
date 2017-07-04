@@ -1,0 +1,232 @@
+﻿@{
+    ViewBag.Title = "ALLCenterProduction_PA";
+    Layout = null;
+}
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+@*<link href="~/Content/css/task.css" rel="stylesheet" />*@
+<link href="~/content/css/headfoot.css" rel="stylesheet" />
+<script src="~/Scripts/mycommon.js"></script>
+<style type="text/css">
+    /*body {
+            background: url(img/bg.png) top center no-repeat;
+            background-size: 100%  auto;
+        }*/
+    .maskallcenpro_PA {
+        position: absolute;
+        top: 0px;
+        filter: alpha(opacity=60);
+        background-color: #777;
+        z-index: 1002;
+        left: 0px;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="container">
+    <div style="padding:5px"></div>
+
+    <ul class="chaxun">
+        <li><input type="button" value="今日" id="selectTodaybtnallcenpro_PA" class="button_chaxun"></li>
+        <li><input type="button" value="昨天" id="selectYesterdaybtnallcenpro_PA" class="button_chaxun"></li>
+
+        <li>开始日期:<input id="startallcenpro_PA" class="easyui-datebox" editable="false"></li>
+        <li>
+            结束日期:  <input id="endallcenpro_PA" class="easyui-datebox" editable="false">
+        </li>
+        @*<li>
+                用户ID:  <input id="useridallcenpro_PA" class="easyui-textbox" maxlength="10">
+            </li>*@
+        @*<li>录入中心
+            <input id="objallcenpro_PA" class="easyui-combobox" name="dept"
+                   data-options="valueField:'id',editable:false,textField:'text',url:'/common/GetObjectCombobox'" />
+            </li>*@
+        <li><input type="button" value="查询" id="commitallcenpro_PA" class="button_chaxun"></li>
+    </ul>
+    <div style="margin:0px 50px auto;  ">
+        <!--<div id="magazineGrid"></div>-->
+        <div style="min-height:300px;">
+            <div id="datagridallcenpro_PA"> </div>
+        </div>
+    </div>
+    <!--创建一个遮罩-->
+    <div id="maskallcenpro_PA" class="maskallcenpro_PA"><div class="gif"><img src="/img/wait.gif"></div></div>
+</div>
+<script type="text/javascript">
+    var array = {};
+    var interval; //调度器对象。
+    var canpost = "true" //默认可以提交
+    var startallcenpro_PA; //开始时间
+    var endallcenpro_PA; //结束时间
+    var DATE_FORMAT = /^[0-9]{4}-[0-1]?[0-9]{2}-[0-3]?[0-9]{2}$/; //用于判断日期格式是否正确
+    //获取窗口百分比的长度
+    function fixWidth(percent) {
+        return document.body.clientWidth * percent; //这里你可以自己做调整
+    }
+    function fixHeight(percent) {
+        return document.documentElement.clientHeight * percent; //这里你可以自己做调整
+    }
+    //检验日期格式是否正确
+    function checkdate(thedate) {
+        if (DATE_FORMAT.test(thedate)) {
+            // alert("您输入的日期格式正确");
+            return "true";
+        } else {
+            alert("抱歉，您输入的日期格式有误，正确格式应为 2016-01-01");
+            return "false";
+        }
+    }
+
+    $(function () {
+        //兼容火狐、IE8
+        //显示遮罩层
+        function showMask() {
+            $("#maskallcenpro_PA").css("height", $(document).height());
+            $("#maskallcenpro_PA").css("width", $(document).width());
+            $("#maskallcenpro_PA").show();
+        }
+        //隐藏遮罩层
+        function hideMask() {
+            $("#maskallcenpro_PA").hide();
+        }
+        //默认加载页面隐藏遮罩层
+        $("#maskallcenpro_PA").hide();
+
+
+        // 禁止F5刷新
+        $(document).bind("keydown", function (e) {
+            e = window.event || e;
+            if (e.keyCode == 116) {
+                // alert("禁止F5刷新");
+                e.keyCode = 0;
+                return false;
+            }
+        });
+        $("#selectTodaybtnallcenpro_PA").click(function () {
+            $("#startallcenpro_PA").datebox("setValue", datenowstr());
+            $("#endallcenpro_PA").datebox("setValue", datenowstr());
+            GetGridata();
+        });
+        $("#selectYesterdaybtnallcenpro_PA").click(function () {
+
+            $("#startallcenpro_PA").datebox("setValue", dateaddstr(-1));
+            $("#endallcenpro_PA").datebox("setValue", dateaddstr(-1));
+            GetGridata();
+        });
+        //点击按钮提交
+        $("#commitallcenpro_PA").click(function () {
+            GetGridata();
+        });
+        function GetGridata() {
+
+            //如果两个录入框都有数据
+            if (canpost == "false") {
+                alert("你查询的速度过快,请喝杯茶稍等片刻再查询...");
+            } else {
+                //赋予日期变量
+                startallcenpro_PA = $('#startallcenpro_PA').datebox('getValue');
+                endallcenpro_PA = $('#endallcenpro_PA').datebox('getValue');
+                // var objid = $("#objcombox").combobox("getValue");
+                //判断日期格式是否正确
+                if (checkdate(startallcenpro_PA) == "true" && checkdate(endallcenpro_PA) == "true") {
+                    postdata_users(startallcenpro_PA, endallcenpro_PA);
+                    canpost = "false";
+                }
+            }
+        }
+        //定义计时器间隔
+        function timerun() {
+            // alert("启用定时器间隔");
+            interval = setInterval(timefun, 1000);
+        }
+        //计时器触发事件
+        function timefun() {
+            //  alert("定时器已触发");
+            canpost = "true";
+            clearInterval(interval);
+        }
+
+        function postdata_users(startallcenpro_PA, endallcenpro_PA) {
+
+            //隐藏遮罩层
+            hideMask();
+            //        //设置倒计时,防止刷单
+            timerun();
+
+            var onlinecount = 0;//在线人数
+            var subspeed = 0;//提交速度
+            $("#datagridallcenpro_PA").datagrid({
+                //url: '/ShowOutPut/GetImage_rc_up',
+                url: '/ShowOutPut/AllCenterProduction_PATJ',
+                pagination: true,
+                pageList: [20, 30, 80, 100, 200],
+                pageSize: 20, //页大小
+                queryParams: { startdate: startallcenpro_PA, enddate: endallcenpro_PA },
+                fitColumns: true,//"寄件人姓名","寄件人电话","收件人姓名","收件人电话","收件人地址","混合字段","物品重量"
+                columns: [[
+                    //{ field: 'objid', title: '中心编号', width: 100 },
+                    { field: 'type1', title: '分中心名称', width: 100 },
+                    { field: 'type2', title: '字节数', width: 100 },
+                     { field: 'type3', title: '录入条数', width: 100 },
+                     { field: 'type3_1', title: '正确字节数', width: 100 },
+                      { field: 'type4', title: '在线人数', width: 100 },
+                       { field: 'type5', title: '提交速度(字节/分钟)', width: 100 },
+                      { field: 'type6', title: '正确字节数', width: 100 },
+                       { field: 'type7', title: '错误字节数', width: 100 },
+                        { field: 'type8', title: '计费字节数', width: 100 },
+                ]],
+                onLoadError: function () {
+                    alert("cw")
+                }
+                , onLoadSuccess: function (data) {
+                    if (startallcenpro_PA.split('-')[2] == new Date().getDate()) {
+                        var rows = $('#datagridallcenpro_PA').datagrid('getRows')//获取当前的数据行
+                        $.each(rows, function (index, obj) {
+
+                            $.ajax({
+                                url: "/showoutput/AllCen_PA_TJ",
+                                async: false,
+                                dataType: 'json',
+                                data: { objid: obj.objid },
+                                success: function (data) {
+                                    $('#datagridallcenpro_PA').datagrid('updateRow', { index: index, row: { type4: data.online, type5: parseFloat(data.speed) } });
+                                    onlinecount += parseInt(data.online);
+                                    subspeed += parseFloat(data.speed);
+                                }
+                            });
+                        });
+                    }
+                    compute();
+                }
+            });
+
+            function compute() {//计算函数
+                var rows = $('#datagridallcenpro_PA').datagrid('getRows')//获取当前的数据行
+                var newrow = {
+                    type1: "<b>当前页合计</b>",
+                    type2: 0,
+                    type3: 0,
+                    type3_1: 0,
+                    type4: onlinecount,
+                    type5: subspeed.toFixed(2)
+                };
+                for (var i = 0; i < rows.length; i++) {
+
+                    newrow.type2 += parseInt(rows[i]['type2']);
+                    newrow.type3 += parseInt(rows[i]['type3']);
+                    newrow.type3_1 += parseInt(rows[i]['type3_1']);
+                }
+                //新增一行显示统计信息
+                $('#datagridallcenpro_PA').datagrid('appendRow', newrow);
+            }
+
+        }
+        //默认执行请求
+        // postdata_users();
+    });
+</script>

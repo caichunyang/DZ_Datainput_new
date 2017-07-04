@@ -1,0 +1,103 @@
+﻿@{
+    ViewBag.Title = "角色权限编辑";
+      Layout = null;
+      
+}
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+@*<link href="~/Content/css/task.css" rel="stylesheet" />*@
+<link href="~/content/css/headfoot.css" rel="stylesheet" />
+<script src="~/Scripts/mycommon.js"></script>
+<style>
+    #centerdiv {
+        text-align:left;
+    }
+
+        #centerdiv ul {
+            float: left;
+            border: 1px solid #ccc;
+        }
+    #tt {
+     width:200px;
+    }
+    #moduletree {
+     width:200px;
+    }
+    #datagridmodule thead {
+     background:#ccc;
+    }
+    #datagridmodule {
+    float:left;   min-height:50px; border-left:1px solid #ccc;border-top:1px solid #ccc;
+    }
+      #datagridmodule td{
+          border-right:1px solid #ccc;border-bottom:1px solid #ccc;
+     text-align:center; padding:2px 10px;
+    }
+</style>
+<script>
+    $(function () {
+        var role_id = 0;
+        $('#tt').tree({
+            url: '/RoleModule/GetRoleTreejson',
+            onClick: function (node) {
+              
+                role_id = node.id;
+               // alert(role_id);
+                $('#moduletree').tree({//tree//treegrid
+                    checkbox: true,
+                   // url: '/module/GetModuleTreejson/' + node.id,//+"/"+new Date().getMilliseconds,
+                    url: '/module/GetModuleTreejson/' + node.id,
+                    //idField: 'Moduleid',
+                    //treeField: 'Modulename',
+                    //cache: false,
+                    //columns: [[
+                    //     { field: 'Moduleid', title: 'ID', width: 180 },
+                    //      { field: 'Modulename', title: '描述', width: 180 },
+                    //    { title: 'Moduleaction', field: 'Moduleaction', width: 180 },
+                    //    { field: 'Controler', title: 'Controler', width: 60, align: 'right' },
+                    //    { field: 'Action', title: 'Action', width: 80 },
+                    //    { field: 'Title', title: '菜单标题', width: 80 },
+                    //    { field: 'Isview', title: '是否为菜单', width: 80 }
+                    //]],
+                    onCheck: function (obj, checked) {
+                       
+                        $.post("/RoleModule/UpdateRoleRight", { roleid: role_id, moduleid: obj.id, check: checked }, function (data) {
+                         
+                            if (data=="False") {
+                                alert("修改失败");
+                            }
+                        }, 'json');
+                        
+                    }, onSelect: function (newnode) {
+                       
+                        $.post("/module/LoadSingleModule", { id: newnode.id }, function (data) {
+                            if (data) {
+                              //  alert(data.Modulename);
+                                var html = "<table><thead><tr><td>ID</td><td>描述</td><td>功能模块名称</td><td>Controler</td><td>Action</td><td>是否页面</td><td>标题</td></tr></thead>" +
+           "<tr><td>" + data.Modulename + "</td><td>"+data.Moduleaction+"</td><td>"+
+          data.Modulename+"</td><td>"+
+          data.Controler + "</td><td>" + data.Action + "</td><td>" + (data.Isview?"是":"否") + "</td><td>" + data.Title + "</td></tr></table>";
+                                $("#datagridmodule").html(html);
+                            }
+                        }, 'json');
+                    }
+                });
+                $("#moduletree").treegrid('reload');
+            }
+        });
+    });
+</script>
+<div id="centerdiv" class="background" >
+    @*<ul id="centerul">*@
+        <ul id="tt" style="float:left;"></ul> 
+        <ul id="moduletree"></ul>
+    <div id="datagridmodule" >
+      
+    </div>
+   @* </ul>*@
+</div>

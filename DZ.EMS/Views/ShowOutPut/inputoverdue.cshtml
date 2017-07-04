@@ -1,0 +1,314 @@
+﻿@{
+    ViewBag.Title = "inputoverdue";
+    Layout = null;}
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+@*<link href="~/Content/css/task.css" rel="stylesheet" />*@
+<link href="~/content/css/headfoot.css" rel="stylesheet" />
+<script src="~/Scripts/mycommon.js"></script>
+<style type="text/css">
+    /*body {
+            background: url(img/bg.png) top center no-repeat;
+            background-size: 100%  auto;
+        }*/
+    .mask_overdue {
+        position: absolute;
+        top: 0px;
+        filter: alpha(opacity=60);
+        background-color: #777;
+        z-index: 1002;
+        left: 0px;
+        opacity: 0.5;
+    }
+
+    .container {
+        text-align: center;
+    }
+
+    .gif {
+        text-align: center;
+        vertical-align: middle;
+        opacity: 1;
+    }
+
+    .right {
+        float: right;
+        text-align: right;
+    }
+
+    .bor img {
+        display: block;
+        width: auto;
+        max-width: 100%;
+    }
+</style>
+
+<div class="container">
+    <div style="padding:5px"></div>
+
+    <ul class="chaxun">
+        <li><input type="button" value="今日" id="selectTodaybtn_overdue" class="button_chaxun"></li>
+        <li><input type="button" value="昨天" id="selectYesterdaybtn_overdue" class="button_chaxun"></li>
+
+        <li>开始日期:<input id="start_overdue" class="easyui-datebox" editable="false"></li>
+        <li>
+            结束日期:  <input id="end_overdue" class="easyui-datebox" editable="false">
+        </li>
+        <li><input type="button" value="查询" id="commit_overdue" class="button_chaxun"></li>
+    </ul>
+    <div style="margin:0px 50px auto;  ">
+        <!--<div id="magazineGrid"></div>-->
+        <div style="min-height:300px; text-align:left;">
+            <div id="overdue_yd_title"></div>
+            <div id="datagrid_overdue_yd"> </div>
+            <div id="overdue_ems_title"></div>
+            <div id="datagrid_overdue_ems"> </div>
+        </div>
+    </div>
+    <!--创建一个遮罩-->
+    <div id="mask_overdue" class="mask_overdue"><div class="gif"><img src="/img/wait.gif"></div></div>
+</div>
+<script type="text/javascript">
+    var array = {};
+    var interval; //调度器对象。
+    var canpost = "true" //默认可以提交
+    var start_overdue; //开始时间
+    var end_overdue; //结束时间
+    var DATE_FORMAT = /^[0-9]{4}-[0-1]?[0-9]{2}-[0-3]?[0-9]{2}$/; //用于判断日期格式是否正确
+    //获取窗口百分比的长度
+    function fixWidth(percent) {
+        return document.body.clientWidth * percent; //这里你可以自己做调整
+    }
+    function fixHeight(percent) {
+        return document.documentElement.clientHeight * percent; //这里你可以自己做调整
+    }
+    //检验日期格式是否正确
+    function checkdate(thedate) {
+        if (DATE_FORMAT.test(thedate)) {
+            // alert("您输入的日期格式正确");
+            return "true";
+        } else {
+            alert("抱歉，您输入的日期格式有误，正确格式应为 2016-01-01");
+            return "false";
+        }
+    }
+
+    $(function () {
+        //兼容火狐、IE8
+        //显示遮罩层
+        function showMask() {
+            $("#mask_overdue").css("height", $(document).height());
+            $("#mask_overdue").css("width", $(document).width());
+            $("#mask_overdue").show();
+        }
+        //隐藏遮罩层
+        function hideMask() {
+            $("#mask_overdue").hide();
+        }
+        //默认加载页面隐藏遮罩层
+        $("#mask_overdue").hide();
+
+
+        // 禁止F5刷新
+        $(document).bind("keydown", function (e) {
+            e = window.event || e;
+            if (e.keyCode == 116) {
+                // alert("禁止F5刷新");
+                e.keyCode = 0;
+                return false;
+            }
+        });
+        $("#selectTodaybtn_overdue").click(function () {
+            var curr_time = new Date();
+            var strDate = curr_time.getFullYear() + "-";
+            strDate += curr_time.getMonth() + 1 + "-";
+            strDate += curr_time.getDate();
+            $("#start_overdue").datebox("setValue", datenowstr());
+            $("#end_overdue").datebox("setValue", datenowstr());
+            GetGridata();
+        });
+        $("#selectYesterdaybtn_overdue").click(function () {
+            var curr_time = new Date();
+            var strDate = curr_time.getFullYear() + "-";
+            strDate += curr_time.getMonth() + 1 + "-";
+            var start = strDate + (curr_time.getDate() - 1);
+            strDate += curr_time.getDate();
+
+            $("#start_overdue").datebox("setValue", dateaddstr(-1));
+            $("#end_overdue").datebox("setValue", dateaddstr(-1));
+            GetGridata();
+        });
+        //点击按钮提交
+        $("#commit_overdue").click(function () {
+
+            GetGridata();
+        });
+        function GetGridata() {
+
+            //如果两个录入框都有数据
+            if (canpost == "false") {
+                alert("你查询的速度过快,请喝杯茶稍等片刻再查询...");
+            } else {
+                //赋予日期变量
+                start_overdue = $('#start_overdue').datebox('getValue');
+                end_overdue = $('#end_overdue').datebox('getValue');
+                //判断日期格式是否正确
+                if (checkdate(start_overdue) == "true" && checkdate(end_overdue) == "true") {
+                    postdata_overdue_yd(start_overdue, end_overdue);
+                    canpost = "false";
+                    postdata_overdue_yd
+                }
+            }
+        }
+        //定义计时器间隔
+        function timerun() {
+            // alert("启用定时器间隔");
+            interval = setInterval(timefun, 1000);
+        } postdata_overdue_yd
+        //计时器触发事件
+        function timefun() {
+            //  alert("定时器已触发");
+            canpost = "true";
+            clearInterval(interval);
+        }
+
+        function postdata_overdue_yd(start_overdue, end_overdue) {
+          
+            $("#overdue_yd_title").html("<h2>A组：</h2>");
+            //隐藏遮罩层
+            hideMask();
+            //        //设置倒计时,防止刷单
+            timerun();
+            // var allcount = 0;
+            $("#datagrid_overdue_yd").datagrid({
+                // url: '/ShowOutPut/GetImage_rc_up',
+                url: '/ShowOutPut/Getinputoverdue_yd',
+                queryParams: { startdate: start_overdue },
+                // queryParams: { startdate: start_overdue, enddate: end_overdue, casekey: "ems" },
+                rownumbers: true,
+                //fitColumns: true,
+                columns: [[
+                    { field: 'a0', title: '接收量（当日）' },
+                    { field: 'a1', title: '上传量（当日接收）' },
+                    { field: 'a2', title: '上传量（昨日接收）' },
+                      { field: 'b1', title: '当日上传量' },
+                    //{ field: 'a3', title: '逾期量（昨日23:00：00~07:59:59）未质检' },
+                    //{ field: 'a4', title: '逾期量（昨日23:00：00~07:59:59）已质检' },
+                    //{ field: 'a5', title: '逾期量（07:59:59~22:59:59）未质检' },
+                    // { field: 'a6', title: '逾期量（07:59:59~22:59:59）已质检' },
+                     { field: 'a3', title: '逾期量（昨日23:00：00~07:59:59）' },
+                       //{ field: 'a4', title: '逾期量（昨日23:00：00~07:59:59）已质检' },
+                    { field: 'a5', title: '逾期量（07:59:59~22:59:59）' },
+                     //{ field: 'a6', title: '逾期量（07:59:59~22:59:59）已质检' },
+                      { field: 'b2', title: '当日逾期' },
+                    { field: 'a7', title: '退单量' },
+                       { field: 'a8', title: '已质检量' },
+                    { field: 'a9', title: '差错量' }
+                ]],
+                onLoadError: function () {
+                    alert("cw")
+                }
+                , onLoadSuccess: function (data) {
+                    // compute();
+                    var therow = $("#datagrid_overdue_yd").datagrid("getData").rows[0];
+                   
+                    therow.b1 = parseInt(therow.a2) + parseInt(therow.a1);
+                    therow.a3 = parseInt(therow.a3) + parseInt(therow.a4);
+                    therow.a5 = parseInt(therow.a5) + parseInt(therow.a6);
+                    therow.b2 = therow.a5 + therow.a3;
+                    $('#datagrid_overdue_yd').datagrid('deleteRow', 0);
+                    $('#datagrid_overdue_yd').datagrid('appendRow', therow);
+                   
+                    //$('#datagrid_overdue_yd').datagrid('load', therow);
+                     
+                    postdata_overdue_ems(start_overdue, end_overdue);
+                }
+            });
+
+            //function compute() {//计算函数postdata_overdue_yd
+            //    var therow = $('#datagrid_overdue_yd').datagrid('getData').rows[index]//获取当前的数据行
+            //    var obj = { datestr: '<b>统计</b>' ,count1:0,count2:0};
+            //    var allcount = 0;
+            //   // var allcount1 = 0;
+            //    for (var i = 0; i < rows.length; i++) {
+            //        obj.count1 += parseInt(rows[i]['count1']);
+            //        obj.count2 += parseInt(rows[i]['count2']);
+            //    }
+            //    //新增一行显示统计信息
+            //    $('#datagrid_overdue_yd').datagrid('appendRow', obj);
+
+            //}
+
+        }
+
+
+        function postdata_overdue_ems(start_overdue, end_overdue) {
+         
+            $("#overdue_ems_title").html("<h2>邮政：</h2>");
+            //隐藏遮罩层
+            hideMask();
+            //        //设置倒计时,防止刷单
+            timerun();
+            // var allcount = 0;
+            $("#datagrid_overdue_ems").datagrid({
+                // url: '/ShowOutPut/GetImage_rc_up',
+                url: '/ShowOutPut/Getinputoverdue_ems',
+                queryParams: { startdate: start_overdue },
+                // queryParams: { startdate: start_overdue, enddate: end_overdue, casekey: "ems" },
+                rownumbers: true,
+                fitColumns: true,
+                columns: [[
+                      { field: 'a0', title: '接收量（当日）' },
+                    { field: 'a1', title: '上传量（当日接收）'},
+                    { field: 'a2', title: '上传量（昨日接收）' },
+                      { field: 'b1', title: '当日上传量'},
+                    //{ field: 'a3', title: '逾期量（昨日23:00：00~07:59:59）未质检' },
+                    //   { field: 'a4', title: '逾期量（昨日23:00：00~07:59:59）已质检' },
+                    //{ field: 'a5', title: '逾期量（07:59:59~22:59:59）未质检'},
+                    // { field: 'a6', title: '逾期量（07:59:59~22:59:59）已质检' },
+                     { field: 'a3', title: '逾期量（昨日23:00：00~07:59:59）' },
+                    { field: 'a5', title: '逾期量（07:59:59~22:59:59）' },
+                      { field: 'b2', title: '当日逾期'},
+                    { field: 'a7', title: '退单量' },
+                       { field: 'a8', title: '已质检量' },
+                    { field: 'a9', title: '差错量' }
+                ]],
+                onLoadError: function () {
+                    alert("cw")
+                }
+                , onLoadSuccess: function (data) {
+                    // compute();
+                    var therow = $("#datagrid_overdue_ems").datagrid("getData").rows[0];
+                    therow.b1 = parseInt(therow.a2) + parseInt(therow.a1);
+                    therow.a3 = parseInt(therow.a3) + parseInt(therow.a4);
+                    therow.a5 = parseInt(therow.a5) + parseInt(therow.a6);
+                    therow.b2 = therow.a5 + therow.a3;
+                    $('#datagrid_overdue_ems').datagrid('deleteRow', 0);
+                    $('#datagrid_overdue_ems').datagrid('appendRow', therow);
+                }
+            });
+
+            //function compute() {//计算函数
+            //    var rows = $('#datagrid_overdue_yd').datagrid('getRows')//获取当前的数据行
+            //    var obj = { datestr: '<b>统计</b>', count1: 0, count2: 0 };
+            //    var allcount = 0;
+            //    // var allcount1 = 0;
+            //    for (var i = 0; i < rows.length; i++) {
+            //        obj.count1 += parseInt(rows[i]['count1']);
+            //        obj.count2 += parseInt(rows[i]['count2']);
+            //    }
+            //    //新增一行显示统计信息
+            //    $('#datagrid_overdue_yd').datagrid('appendRow', obj);
+
+            //}
+
+        }
+        //默认执行请求
+        // postdata_overdue_yd();
+    });
+</script>

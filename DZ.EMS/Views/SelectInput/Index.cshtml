@@ -1,0 +1,106 @@
+﻿@{
+    ViewBag.Title = "Index";
+      Layout = null;
+}
+<style>
+      /*.myobjemschaxun li {
+        float: left;
+        margin: 5px 10px;
+    }
+
+    #win_myobjems {
+        margin: 0 auto;
+        text-align: center;
+    }
+
+        #win_myobjems img {
+            border: 1px solid #ccc;
+            margin: 0 auto;
+        }
+
+         .ems_chaxun li {
+        float: left;
+        margin: 5px 10px;
+    }
+
+    #win_ems {
+        margin: 0 auto;
+        text-align: center;
+    }
+
+        #win_ems img {
+            border: 1px solid #ccc;
+            margin: 0 auto;
+        }
+
+           .chaxunkey li {
+        float: left;
+        margin: 5px 10px;
+    }
+
+    #myobjyd {
+        margin: 0 auto;
+        text-align: center;
+    }
+
+        #myobjyd img {
+            border: 1px solid #ccc;
+            margin: 0 auto;
+            text-align: center;
+        }*/
+        .chaxunkey li {
+        float: left;
+        margin: 5px 10px;
+    }
+
+    .win {
+        margin: 0 auto;
+        text-align: center;
+    }
+
+        .win img {
+            border: 1px solid #ccc;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+    .urwin li {
+        float: left;
+        width: 400px;
+        height: 30px;
+        font-size: 15px;
+        color: blue;
+        text-align: left;
+        padding-top:8px;
+        border-bottom:1px solid #ccc;
+    }
+    .addr {
+     color:red;
+    }
+    .urwin li span {
+     float:left;
+    }
+        .urwin li span:first-child {
+            color:black;
+            display:block;
+            width:80px;
+            margin: 0 5px;
+            font-size: 18px;
+           
+            
+        }
+        
+</style>
+<div style="width:100%; margin:0 auto; background:white;" class="background">
+    <div id="tt" class="easyui-tabs">
+      
+        @foreach (DZ.MODEL.DZ_MODULE item in @ViewBag.tabs)
+        {
+            var href = "/" + @item.Controler + "/" + @item.Action;
+            <div title="@item.Title" data-options="closable:false,href:'@href'" style="overflow:auto;padding:20px;display:none;">
+
+            </div>
+        }
+
+    </div>
+</div>

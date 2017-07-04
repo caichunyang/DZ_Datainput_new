@@ -1,0 +1,122 @@
+﻿@{
+    ViewBag.Title = "功能模块管理";
+      Layout = null;
+}
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+@*<link href="~/Content/css/task.css" rel="stylesheet" />*@
+<link href="~/content/css/headfoot.css" rel="stylesheet" />
+<script src="~/Scripts/mycommon.js"></script>
+
+<link href="~/Content/css/task.css" rel="stylesheet" />
+<script>
+    $(function () {
+        $('#moduleview').datagrid({
+            url: '/module/GetModuleGriedview',
+            columns: [[
+                { field: 'Moduleid', title: 'ID', width: 100, editor: { type: 'numberbox' } },
+                //{ field: 'Parentid', title: 'Name', width: 100 },
+                { field: 'Moduleaction', title: 'moduleaction', width: 130, align: 'left', editor: 'textbox' },
+                 { field: 'Modulename', title: '模块名称', width: 130, align: 'left', editor: 'textbox' },
+                  { field: 'Disablestatus', title: 'TOP菜单', width: 100, align: 'left', editor: 'textbox' },
+                  { field: 'Controler', title: 'controler', width: 100, align: 'left', editor: 'textbox', },
+                  { field: 'Action', title: 'action', width: 160, align: 'left', editor: 'textbox' },
+            { field: 'Title', title: '标题', width: 100, align: 'left', editor: 'textbox', },
+                  {
+                      field: 'status', title: '是否为菜单', width: 100, align: 'left'
+             //, styler: function (value, row, index) {
+             //    if (value > 0) {
+             //        return 'background-color:#ffee00;color:red;';
+             //    }
+             //}
+                      , editor: { type: 'checkbox', options: { on: 'P', off: '' } }
+                  }
+            ]], onClickRow: onClickRow
+        });
+    });
+</script>
+@*<div style=" height:50px; width:100%; ">
+    </div>*@
+
+<div style=" text-align:center; width:1000px; margin:0 auto;">
+    <div id="tb" style="height:auto">
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" onclick="append()">添加</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" onclick="removeit()">删除</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-save',plain:true" onclick="accept()">Accept</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-undo',plain:true" onclick="reject()">撤销</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-search',plain:true" onclick="getChanges()">保存</a>
+    </div>
+    <div id="moduleview"></div>
+
+
+    <script type="text/javascript">
+        var editIndex = undefined;
+        function endEditing() {
+            if (editIndex == undefined) { return true }
+            if ($('#moduleview').datagrid('validateRow', editIndex)) {
+                // var ed = $('#moduleview').datagrid('getEditor', { index: editIndex, field: 'productid' });
+                //  var productname = $(ed.target).combobox('getText');
+                //  $('#moduleview').datagrid('getRows')[editIndex]['productname'] = productname;
+                $('#moduleview').datagrid('endEdit', editIndex);
+                editIndex = undefined;
+                return true;
+            } else {
+                return false;
+            }
+        }
+        function onClickRow(index) {
+            if (editIndex != index) {
+                if (endEditing()) {
+                    $('#moduleview').datagrid('selectRow', index)
+							.datagrid('beginEdit', index);
+                    editIndex = index;
+                } else {
+                    $('#moduleview').datagrid('selectRow', editIndex);
+                }
+            }
+        }
+        function append() {
+            if (endEditing()) {
+                $('#moduleview').datagrid('appendRow', { status: 'P' });
+                editIndex = $('#moduleview').datagrid('getRows').length - 1;
+                $('#moduleview').datagrid('selectRow', editIndex)
+						.datagrid('beginEdit', editIndex);
+            }
+        }
+        function removeit() {
+            if (editIndex == undefined) { return }
+            $('#moduleview').datagrid('cancelEdit', editIndex)
+					.datagrid('deleteRow', editIndex);
+            editIndex = undefined;
+        }
+        function accept() {
+
+        }
+        function reject() {
+            $('#moduleview').datagrid('rejectChanges');
+            editIndex = undefined;
+        }
+        function getChanges() {
+            if (endEditing()) {
+                // $('#moduleview').datagrid('acceptChanges');
+                var rows = $('#moduleview').datagrid('getChanges');
+                $.each(rows, function (i, obj) {
+                    if (obj.status) {
+                        obj.isview = 1;
+                    } else {
+                        obj.isview = 0;
+                    }
+                });
+                $.post("/module/UpdateModule", { json: JSON.stringify(rows) }, function (data) {
+                    alert(data);
+                });
+            }
+            //alert(rows.length + ' rows are changed!');
+        }
+    </script>
+</div>

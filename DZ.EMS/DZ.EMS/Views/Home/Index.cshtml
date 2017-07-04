@@ -1,0 +1,107 @@
+﻿@{
+    ViewBag.Title = "任务中心";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    #win li {
+        float: left;
+        font-size: 18px;
+        margin: 8px;
+    }
+
+        #win li a {
+            font-size: 18px;
+        }
+</style>
+<script>
+    $(function () {
+        $(".inputclick").click(function () {
+            //$.get("/input/url", {}, function (data) {
+            //    if (data) {
+            //        if (data.length > 0) {
+            //            var html = "";
+            //            $.each(data, function (i, item) {
+            //                html += "<li><a href='/" + item.Controler + "/" + item.Action + "'>" + item.Modulename + "</a></li>"
+            //            });
+            //            $("#win").html(html);
+            //            $("#win").window({
+            //                title: "选择入口",
+            //                // width: 400,
+            //                modal: true
+            //            });
+            //        } else {
+            //            location.href = "/" + data.Controler + "/" + data.Action;
+            //        }
+            //    }
+            //}, 'json');
+            location.href = "/input/inputimage";
+        });
+        $(".outputclick").click(function () {
+            location.href = "/ShowOutPut/showcenter"
+        });
+        $(".datacheckclick").click(function () {
+
+        });
+        dealRight();
+    });
+    ///权限处理
+    function dealRight() {
+        var chekenable = "@ViewBag.checkenable";
+        if (chekenable) {
+
+            var json = JSON.parse(chekenable);
+            if (json) {
+                if (json.length > 0) {
+                    var html = "";
+                    $.each(json, function (i, item) {
+                        html += "<li><a href='/" + item.Controler + "/" + item.Action + "'>" + item.Modulename + "</a></li>"
+                    });
+                    $("#win").html(html);
+                    $("#win").window({
+                        title: "选择入口",
+                        // width: 400,
+                        modal: true
+                    });
+                } else {
+                    location.href = "/" + data.Controler + "/" + data.Action;
+                }
+            } else {
+                $(".datacheckclick").css("visibility", "hidden");
+            }
+        } else {
+            $(".datacheckclick").css("visibility", "hidden");
+        }
+        //if (checkenable=="True") {
+        //    $(".datacheckclick").css("visibility", "visible");//visible
+        //}else
+        //{
+        //    $(".datacheckclick").css("visibility", "hidden");
+        //}
+    }
+
+</script>
+<div class="background">
+    <div class="technical">
+        <div class="head_technical">
+            <h3>我的技能</h3>
+        </div>
+        <ul class="img">
+            <li class="inputclick"><a href="#"><img style=" visibility:visible" src="/images/photos.png" alt=""></a></li>
+            <li class="outputclick"><a href="#"><img src="/images/folder_photos.png" alt=""></a></li>
+            <li class="datacheckclick"><a href="#"><img src="/images/document.png" alt=""></a></li>
+        </ul>
+        <ul class="alt">
+            <li class="inputclick">识图录入</li>
+            <li  class="outputclick">产量查询</li>
+            <li class="datacheckclick">数据质检</li>
+        </ul>
+        <ul id="win"></ul>
+    </div>
+
+    <div class="submit_number">
+        <div class="head_submit_number">
+            <h3>今日提交量</h3>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,185 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <title>@ViewBag.Title</title>
+    <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+    <meta name="viewport" content="width=device-width" />
+    @*@Styles.Render("~/Content/css")
+        @Scripts.Render("~/bundles/modernizr")*@
+
+    @*<link href="~/Content/css/normalize.css" rel="stylesheet" />
+        <link href="~/Content/fonts/font-awesome-4.2.0/css/font-awesome.min.css" rel="stylesheet" />
+        <link href="~/Content/css/demos.css" rel="stylesheet" />
+        <link href="~/Content/css/component.css" rel="stylesheet" />*@
+
+    <link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+    <script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+    <script src="~/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+    <link href="~/Content/table.css" rel="stylesheet" />
+    <link href="~/Content/css/task.css" rel="stylesheet" />
+    <link href="~/content/css/headfoot.css" rel="stylesheet" />
+    <script>
+        function addDate(a, dadd) {
+            //  var a = new Date(dd)
+            a = a.valueOf()
+            a = a + dadd * 24 * 60 * 60 * 1000
+            a = new Date(a)
+            return a;
+        }
+        function datenowstr() {
+            var curr_time = new Date();
+            var strDate = curr_time.getFullYear() + "-";
+            strDate += curr_time.getMonth() + 1 + "-";
+            strDate += curr_time.getDate();
+            return strDate;
+        }
+        function dateaddstr(addday) {
+            var curr_time = new Date();
+            curr_time = addDate(curr_time, addday)
+            var strDate = curr_time.getFullYear() + "-";
+            strDate += curr_time.getMonth() + 1 + "-";
+            strDate += curr_time.getDate();
+            return strDate;
+        }
+        //扩展easyui表单的验证
+        $.extend($.fn.validatebox.defaults.rules, {
+            //验证汉子
+            CHS: {
+                validator: function (value) {
+                    return /^[\u0391-\uFFE5]+$/.test(value);
+                },
+                message: '只能输入汉字'
+            },
+            //移动手机号码验证
+            mobile: {//value值为文本框中的值
+                validator: function (value) {
+                    var reg = /^1[3|4|5|8|9]\d{9}$/;
+                    return reg.test(value);
+                },
+                message: '输入手机号码格式不准确.'
+            },
+            //国内邮编验证
+            zipcode: {
+                validator: function (value) {
+                    var reg = /^[1-9]\d{5}$/;
+                    return reg.test(value);
+                },
+                message: '邮编必须是非0开始的6位数字.'
+            },
+            //密码
+            pwd: {
+                validator: function (value) {
+                    var reg = /^[0-9]\d{5}$/;
+                    return reg.test(value);
+                },
+                message: '密码为6位数字.'
+            },
+            idcard: {// 验证身份证
+                validator: function (value) {
+                    return /^\d{15}(\d{2}[A-Za-z0-9])?$/i.test(value);
+                },
+                message: '身份证号码格式不正确'
+            },
+            minLength: {
+                validator: function (value, param) {
+                    return value.length >= param[0];
+                },
+                message: '请输入至少（2）个字符.'
+            },
+            length: {
+                validator: function (value, param) {
+                    var len = $.trim(value).length;
+                    return len >= param[0] && len <= param[1];
+                },
+                message: "输入内容长度必须介于{0}和{1}之间."
+            },
+            //用户账号验证(只能包括 _ 数字 字母) 
+            account: {//param的值为[]中值
+                validator: function (value, param) {
+                    if (value.length < param[0] || value.length > param[1]) {
+                        $.fn.validatebox.defaults.rules.account.message = '用户名长度必须在' + param[0] + '至' + param[1] + '范围';
+                        return false;
+                    } else {
+                        if (!/^[\w]+$/.test(value)) {
+                            $.fn.validatebox.defaults.rules.account.message = '用户名只能数字、字母、下划线组成.';
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    }
+                }, message: ''
+            }
+        })
+    </script>
+ 
+  
+</head>
+<body>
+    @{DZ.MODEL.SessionModel sessionmodel = Session["user"] as DZ.MODEL.SessionModel;}
+    <div class="head">
+        <div class="head_content">
+            <a href="/">
+                <ul class="logo">
+
+                    <li><img style="width:60px;height:60px;margin:25px 20px 0 0" src="../images/Logo.png" /></li>
+                    <li class="logo_title">欢迎来到大政任务</li>
+
+                </ul>
+            </a>
+            @*<ul class="count">
+                                <ul>
+                        <li>待检单量:</li>
+                        <li class="count_number"><div class="count_number2"><span>20%</span></div></li>
+                    </ul>
+                </ul>*@
+            <ul class="navigation">
+                @{
+                    var topmenu = sessionmodel.ModuleList.Where(a => a.Disablestatus > 0 && a.Isview == 1).OrderBy(a => a.Disablestatus);
+                    foreach (var item in topmenu)
+                    {
+                        <li><a href="/@item.Controler/@item.Action">@item.Title</a></li>
+                    }
+                }
+                @*<li><a href="/home/index">任务大厅</a></li>
+                    <li><a href="/announcement/index">公告</a></li>
+                    <li><a href="/help/index">帮助</a></li>
+                    <li><a href="/rolemodule/roleright">角色权限</a></li>
+                    <li><a href="/module/index">权限编辑</a></li>*@
+
+            </ul>
+            <ul class="User">
+                <a href="/user/index">
+                    <ul>
+
+                        @{
+                            string objname = ""; string userid = "";
+                            if (sessionmodel != null)
+                            {
+                                objname = sessionmodel.objname;
+                                userid = sessionmodel.User.Userid;
+
+                            }
+                        }
+                        <li>帐号 @userid</li>
+                        <li>组织 @objname</li>
+                    </ul>
+                </a>
+
+            </ul>
+        </div>
+
+    </div>
+
+    @RenderBody()
+
+
+  
+</body>
+</html>
+@*@Scripts.Render("~/bundles/jquery")
+    @RenderSection("scripts", required: false)*@

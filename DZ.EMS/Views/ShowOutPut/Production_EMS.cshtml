@@ -1,0 +1,246 @@
+﻿@{
+    ViewBag.Title = "员工邮政产量";
+    Layout = null;
+}
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+@*<link href="~/Content/css/task.css" rel="stylesheet" />*@
+<link href="~/content/css/headfoot.css" rel="stylesheet" />
+<script src="~/Scripts/mycommon.js"></script>
+<style type="text/css">
+    /*body {
+            background: url(img/bg.png) top center no-repeat;
+            background-size: 100%  auto;
+        }*/
+    .maskpro_ems {
+        position: absolute;
+        top: 0px;
+        filter: alpha(opacity=60);
+        background-color: #777;
+        z-index: 1002;
+        left: 0px;
+        opacity: 0.5;
+    }
+
+    .container {
+        text-align: center;
+    }
+
+    .gif {
+        text-align: center;
+        vertical-align: middle;
+        opacity: 1;
+    }
+
+    .right {
+        float: right;
+        text-align: right;
+    }
+
+    .bor img {
+        display: block;
+        width: auto;
+        max-width: 100%;
+    }
+
+    #gridview {
+        width: 100%;
+        min-height: 500px;
+    }
+</style>
+
+<div class="container">
+    <div style="padding:5px"></div>
+
+    <ul class="chaxun">
+        <li><input type="button" value="查询" id="commitpro_ems" class="button_chaxun"></li>
+        <li>开始日期:<input id="startpro_ems" class="easyui-datebox" editable="false"></li>
+        <li>
+            结束日期:  <input id="endpro_ems" class="easyui-datebox" editable="false">
+        </li>
+        <li>
+            用户ID:  <input id="useridpro_ems" class="easyui-textbox" maxlength="10">
+        </li>
+        <li><input type="button" value="查询今日" id="selectTodaybtnpro_ems" class="button_chaxun"></li>
+        <li><input type="button" value="查近两天" id="selectYesterdaybtnpro_ems" class="button_chaxun"></li>
+    </ul>
+    <div style="margin:0px 50px auto;  ">
+        <!--<div id="magazineGrid"></div>-->
+        <div style="min-height:300px;">
+            <div id="datagridpro_ems"> </div>
+        </div>
+    </div>
+    <!--创建一个遮罩-->
+    <div id="maskpro_ems" class="maskpro_ems"><div class="gif"><img src="/img/wait.gif"></div></div>
+</div>
+<script type="text/javascript">
+    var array = {};
+    var interval; //调度器对象。
+    var canpost = "true" //默认可以提交
+    var startpro_ems; //开始时间
+    var endpro_ems; //结束时间
+    var DATE_FORMAT = /^[0-9]{4}-[0-1]?[0-9]{2}-[0-3]?[0-9]{2}$/; //用于判断日期格式是否正确
+    //获取窗口百分比的长度
+    function fixWidth(percent) {
+        return document.body.clientWidth * percent; //这里你可以自己做调整
+    }
+    function fixHeight(percent) {
+        return document.documentElement.clientHeight * percent; //这里你可以自己做调整
+    }
+    //检验日期格式是否正确
+    function checkdate(thedate) {
+        if (DATE_FORMAT.test(thedate)) {
+            // alert("您输入的日期格式正确");
+            return "true";
+        } else {
+            alert("抱歉，您输入的日期格式有误，正确格式应为 2016-01-01");
+            return "false";
+        }
+    }
+
+    $(function () {
+        //兼容火狐、IE8
+        //显示遮罩层
+        function showMask() {
+            $("#maskpro_ems").css("height", $(document).height());
+            $("#maskpro_ems").css("width", $(document).width());
+            $("#maskpro_ems").show();
+        }
+        //隐藏遮罩层
+        function hideMask() {
+            $("#maskpro_ems").hide();
+        }
+        //默认加载页面隐藏遮罩层
+        $("#maskpro_ems").hide();
+
+
+        // 禁止F5刷新
+        $(document).bind("keydown", function (e) {
+            e = window.event || e;
+            if (e.keyCode == 116) {
+                // alert("禁止F5刷新");
+                e.keyCode = 0;
+                return false;
+            }
+        });
+        $("#selectTodaybtnpro_ems").click(function () {
+            var curr_time = new Date();
+            var strDate = curr_time.getFullYear() + "-";
+            strDate += curr_time.getMonth() + 1 + "-";
+            strDate += curr_time.getDate();
+            $("#startpro_ems").datebox("setValue", strDate);
+            $("#endpro_ems").datebox("setValue", strDate);
+            GetGridata();
+        });
+        $("#selectYesterdaybtnpro_ems").click(function () {
+            var curr_time = new Date();
+            var strDate = curr_time.getFullYear() + "-";
+            strDate += curr_time.getMonth() + 1 + "-";
+            var start = strDate + (curr_time.getDate() - 1);
+            strDate += curr_time.getDate();
+
+            $("#startpro_ems").datebox("setValue", start);
+            $("#endpro_ems").datebox("setValue", strDate);
+            GetGridata();
+        });
+        //点击按钮提交
+        $("#commitpro_ems").click(function () {
+            GetGridata();
+        });
+        function GetGridata() {
+
+            //如果两个录入框都有数据
+            if (canpost == "false") {
+                alert("你查询的速度过快,请喝杯茶稍等片刻再查询...");
+            } else {
+                //赋予日期变量
+                startpro_ems = $('#startpro_ems').datebox('getValue');
+                endpro_ems = $('#endpro_ems').datebox('getValue');
+                //判断日期格式是否正确
+                if (checkdate(startpro_ems) == "true" && checkdate(endpro_ems) == "true") {
+                    postdata_users(startpro_ems, endpro_ems);
+                    canpost = "false"; postdata_users
+                }
+            }
+        }
+        //定义计时器间隔
+        function timerun() {
+            // alert("启用定时器间隔");
+            interval = setInterval(timefun, 1000);
+        }
+        //计时器触发事件
+        function timefun() {
+            //  alert("定时器已触发");
+            canpost = "true";
+            clearInterval(interval);
+        }
+
+        function postdata_users(startpro_ems, endpro_ems) {
+            var wherestr = $("#useridpro_ems").textbox("getValue");
+            if ($.trim(wherestr)) {
+                wherestr="t.userid like '%"+wherestr+"%'"
+            }
+            //隐藏遮罩层
+            hideMask();
+            //        //设置倒计时,防止刷单
+            timerun();
+            // var allcount = 0;
+            $("#datagridpro_ems").datagrid({
+                //url: '/ShowOutPut/GetImage_rc_up',
+                url: '/ShowOutPut/GetOutPutTJ',
+
+                queryParams: { startdate: startpro_ems, enddate: endpro_ems, casekey: "ems", wherestr: wherestr },
+                rownumbers: true,
+
+                columns: [[
+                    { field: 'userid', title: '用户ID', width: 100, sortable: true },
+                    { field: 'thedate', title: '录入日期', width: 100, sortable: true },
+                    //{ field: 'encode', title: 'encode', width: 100 },
+                    { field: 'thenum', title: '录入量', width: 100 ,sortable:true},
+                    //{ field: 'lv', title: '上传量', width: 100 }
+                    //, { field: 'integral', title: '日期', width: 100 },
+                    { field: 'checknum', title: '检查数量', width: 100, sortable: true },
+                    { field: 'checkerrnum', title: '检查更正数量', width: 100, sortable: true }
+                    , { field: 'errnum', title: '错误数量', width: 100, sortable: true }
+                     , { field: 'backnum', title: '退回量', width: 100, sortable: true }
+
+                ]],
+            onLoadError: function () {
+                    alert("cw")
+                }
+                , onLoadSuccess: function (data) {
+                    compute();
+                }
+            });
+
+            function compute() {//计算函数
+                var rows = $('#datagridpro_ems').datagrid('getRows')//获取当前的数据行
+                var thenum = 0;
+                var checknum = 0;
+                var checkerrnum = 0;
+                var errnum = 0;
+                var backnum = 0;
+                for (var i = 0; i < rows.length; i++) {
+                    thenum += parseInt(rows[i]['thenum']);
+                    checknum += parseInt(rows[i]['checknum']);
+                    checkerrnum += parseInt(rows[i]['checkerrnum']);
+
+                    errnum += parseInt(rows[i]['errnum']);
+                    backnum += parseInt(rows[i]['backnum']);
+                }
+               // alert(errnum + "_")
+                //新增一行显示统计信息
+               $('#datagridpro_ems').datagrid('appendRow', { userid: '<b>合计</b>', thenum: thenum, checknum: checknum, checkerrnum: checkerrnum, errnum: errnum, backnum: backnum });
+              
+            }
+
+        }
+        //默认执行请求
+        // postdata_users();
+    });
+</script>

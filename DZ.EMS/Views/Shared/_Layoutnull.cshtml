@@ -1,0 +1,39 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <title>@ViewBag.Title</title>
+    <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+    <meta name="viewport" content="width=device-width" />
+    @*@Styles.Render("~/Content/css")
+        @Scripts.Render("~/bundles/modernizr")*@
+
+    @*<link href="~/Content/css/normalize.css" rel="stylesheet" />
+        <link href="~/Content/fonts/font-awesome-4.2.0/css/font-awesome.min.css" rel="stylesheet" />
+        <link href="~/Content/css/demos.css" rel="stylesheet" />
+        <link href="~/Content/css/component.css" rel="stylesheet" />*@
+
+    <link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+    <script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+    <script src="~/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+   
+   
+</head>
+<body>
+  
+    @RenderBody()
+
+    @{DZ.MODEL.SessionModel sessionmodel = Session["user"] as DZ.MODEL.SessionModel;}
+    @if (sessionmodel == null)
+    {
+       // return new JavaScriptResult().Script="window.location.href = '/home/login'";
+        
+    }
+  
+</body>
+</html>
+@*@Scripts.Render("~/bundles/jquery")
+    @RenderSection("scripts", required: false)*@

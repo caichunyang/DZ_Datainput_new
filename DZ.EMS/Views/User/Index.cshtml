@@ -1,0 +1,111 @@
+﻿@{
+    ViewBag.Title = "Index";
+      Layout = null;
+}
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+@*<link href="~/Content/css/task.css" rel="stylesheet" />*@
+<link href="~/content/css/headfoot.css" rel="stylesheet" />
+<script src="~/Scripts/mycommon.js"></script>
+
+<script>
+    $(function () {
+        $(".boxx_3").css("display", "block");//默认页
+    });
+    function navclick(a) {
+        if (a==1) {
+            $(".box_1").css("display", "none");
+            $(".boxx_1").css("display", "block");
+        } else if (a == 2)
+        {
+            $(".box_1").css("display", "none");
+            $(".boxx_2").css("display", "block");
+        } else if (a == 3) {
+            $(".box_1").css("display", "none");
+            $(".boxx_3").css("display", "block");
+        }
+    }
+    function pwsubmit() {
+        var obj = {};
+        var oldpwd = $.trim($("#oldpwd").val());
+        var newpwd1 = $.trim($("#newpwd1").val());
+        var newpwd2 = $.trim($("#newpwd2").val());
+        if (newpwd1 != "" && newpwd2 != "") {
+            if (newpwd1.length<3) {
+                //alert("两次输入新密码不一致!");
+                $("#tips").html("密码长度为6").css("color", "red");
+                return;
+            }
+            if (newpwd1 != newpwd2) {
+                //alert("两次输入新密码不一致!");
+                $("#tips").html("两次输入新密码不一致!").css("color", "red");
+            } else {
+                $.post("/user/ChangePsw", { oldpwd: oldpwd, newpwd: newpwd1 }, function myfunction(data) {
+                    
+                    if (data.statu == 1) {
+                        alert(data.msg + ", 将跳转回登录页");
+                        location.href = "/home/login"
+                    } else {
+
+                        $("#tips").html(data.msg).css("color","red");
+                    }
+                },'json');
+            }
+        } else {
+            //alert("请完整输入2次新密码");
+            $("#tips").html("请完整输入2次新密码").css("color", "red");
+        }
+    }
+</script>
+
+<link href="~/Content/css/userx.css" rel="stylesheet" />
+@{
+    DZ.MODEL.SessionModel sessmodel = ViewBag.model as DZ.MODEL.SessionModel; 
+    
+}
+<div class="box">
+    <div class="user_img">
+        <img src="../../images/user2.png" onclick="navclick(3)" alt="">
+        <ul class="user_name" onclick="navclick(3)">
+            <li>用户名信息</li>
+        </ul>
+        <ul class="user_message">
+            <li>>>账号验证<<</li>
+            <li>>>支付信息<<</li>
+            @*<li><a href="#" onclick="navclick(2)">>>账号安全<<</a></li>*@
+            <li><a href="javascript:void(0)" onclick="navclick(1)" >>>修改密码<<</a></li>
+            @*<li><a href="/user/loginout">>>退出登录<<</a></li>*@
+        </ul>
+    </div>
+    <div class="boxx_3 box_1">
+        <ul class="userinfoul">
+            <li>帐号:<input name="name" value="@sessmodel.User.Userid" /></li>
+            <li>用户名:<input type="text" name="@sessmodel.User.Username" value="@sessmodel.User.Username" /></li>
+            <li>组织<input type="text" name="name" value="@sessmodel.objname" /></li>
+            <li>状态<input type="text" name="name" value="@sessmodel.User.state" /></li>
+            <li>权限组<input type="text" name="name" value="@sessmodel.User.Groupname" /></li>
+        </ul>
+    </div>
+    <div class="boxx_1 box_1">
+        <ul class="changpaw">
+            <li>旧密码:<input type="password" id="oldpwd" name="name" maxlength="6" value="" /></li>
+            <li>新密码:<input type="password" id="newpwd1" name="name" maxlength="6" value="" /></li>
+            <li>重新录入新密码:<input type="password" id="newpwd2" maxlength="6" name="name" value="" /></li>
+            <li><input type="button" name="name" class="pwsubmit" onclick="pwsubmit()" value="提交" /></li>
+            <li><span id="tips"></span></li>
+        </ul>
+    </div>
+    <div class="boxx_2 box_1">
+        <ul class="changpaw">
+            <li>旧密x码:<input type="password" name="name" value="" /></li>
+            <li>新密码:<input type="password" name="name" value="" /></li>
+            <li>重新录入新密码:<input type="password" name="name" value="" /></li>
+        </ul>
+    </div>
+   
+</div>

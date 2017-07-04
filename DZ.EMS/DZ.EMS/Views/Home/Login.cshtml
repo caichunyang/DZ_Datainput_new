@@ -1,0 +1,68 @@
+﻿@{
+    ViewBag.Title = "Login";
+    Layout = "~/Views/Shared/_Layoutlogin.cshtml";
+}
+<script>
+    function loginclick() {
+
+        var obj = { };
+        obj.username = $.trim($("#username").val());
+        obj.password = $.trim($("#password").val());
+      
+        obj.code=$.trim($("#code").val());
+        $.post("/home/loginckeck", obj, function (data) {
+            location.href = data;
+        });
+    }
+    function changecode() {
+        $.get("/common/createcode", {}, function (data) {
+            var img = $("#codeimg");
+            img.attr("src", "/common/createcode/"+new Date().getTime());
+        });
+    }
+</script>
+<link href="~/Content/css/login.css" rel="stylesheet" />
+<div class="container_center">
+    <div class="left_trend">
+        <span id="ribbon">9月 <strong>13</strong></span>
+        <h3>大政动态</h3>
+        <div class="trend">
+            <ul class="trend_left">
+                <li>[公告通知]</li>
+                <li>[公告通知]</li>
+                <li>[公告通知]</li>
+                <li>[公告通知]</li>
+                <li>[公告通知]</li>
+                <li>[公告通知]</li>
+            </ul>
+            <ul class="trend_right">
+                <li><a href="#">本周六、日(9月10-11日)任务预报。</a></li>
+                <li><a href="#">大政任务是免费参与的！</a></li>
+                <li><a href="#">"大政助理"的微信</a></li>
+                <li><a href="#">本周六、日(9月10-11日)任务预报。</a></li>
+                <li><a href="#">大政任务是免费参与的！</a></li>
+                <li><a href="#">"大政助理"的微信</a></li>
+            </ul>
+        </div>
+    </div>
+   
+    <div class="right_enter">
+        <h3>用户登录</h3>
+        <div class="right_enter_white">
+            <ul class="enter">
+                <li>用户名:</li>
+                <li>密码:</li>
+                <li>验证码:</li>
+            </ul>
+            <ul class="text">
+                <li><input id="username" type="text" value=""></li>
+                <li><input id="password" type="text"  value=""></li>
+                <li><input type="text" id="code" style="width:70px;"><img src="/common/createcode" onclick="changecode()" id="codeimg" style="width:50px; margin:5px; vertical-align:middle; height:30px;" alt="Alternate Text"  /><a href="#" onclick="    changecode()">换一张</a></li>
+            </ul>
+            <input type="button" class="register" onclick="loginclick()" value="登录">
+            <span class="login"><a href="#"> 找回密码？ </a>|<a href="register.html"> 注册新账号</a> | <a href="#">意见反馈 </a></span>
+            <span style=" color:red;display:block; float:left; width:120px; text-align:center; margin:10px auto;">@ViewBag.tips</span>
+        </div>
+    </div>
+</div>
+<!-- 中间居中div -->

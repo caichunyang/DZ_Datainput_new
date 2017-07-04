@@ -1,0 +1,164 @@
+﻿@{
+    ViewBag.Title = "mycenterSelect_ems";
+    Layout = null;
+}
+
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+@*<link href="~/Content/css/task.css" rel="stylesheet" />*@
+<link href="~/content/css/headfoot.css" rel="stylesheet" />
+<script src="~/Scripts/mycommon.js"></script>
+<script>
+    $(function () {
+        $("#myobjemsimagecommit").click(function () {
+
+            // alert($("#my_objcombobox").combobox("getValue"));
+            myobjemsLoadDataGridview();
+        });
+    });
+    function myobjemsLoadDataGridview() {
+
+        var obj = {};
+        //obj.objid = $("#my_objcombobox").combobox("getValue");
+        obj.imageid = $("#myobjemsimage_imageid").textbox("getValue");
+        obj.guid = $("#myobjemsimage_guid").textbox("getValue");
+        obj.userid = $("#myobjemsimage_userid").textbox("getValue");
+        obj.values1 =escape( $("#myobjemsimage_values1").textbox("getValue"));
+       // obj.inputstate = $("#myobjemsimage_inputstate").textbox("getValue");
+        obj.startdate = $('#startdate_myobjems').datebox('getValue');
+        obj.filedtype = $("#myobjemsfiledtype").combobox('getValue');
+        obj.enddate = $('#enddate_ems').datebox('getValue');
+      
+        if (!obj.startdate) {
+            alert("请输入查询日期");
+            return
+        }
+   
+        $("#myobjemsimagegridview").datagrid({
+            url: '/selectinput/GetCenterInputImage_ems',
+            queryParams: obj,
+            rownumbers: true,
+            pagination: true,
+            pageList: [20, 30, 80, 100, 200],
+            pageSize: 20, //页大小
+            striped: true, //行背景交换
+            //border: false,
+            fitColumns: true,
+            columns: [[
+                   { field: 'imageid', title: '图片编号', width: 70 },
+
+                { field: 'inputname', title: '录入类型', width: 70 },
+                { field: 'values1', title: '录入', width: 100 },
+                //{ field: 'values2', title: 'values2', width: 100 },
+                { field: 'values3', title: '质检录入', width: 100 },
+                { field: 'inputstate', title: '上传状态', width: 40 },
+                { field: 'userid1', title: '录入人', width: 70 },
+                  //{ field: 'userid2', title: '录入人2', width: 70 },
+                    { field: 'userid3', title: '质检人', width: 70 },
+                    { field: 'thedate1', title: '录入时间', width: 100 },
+                  //{ field: 'thedate2', title: 'thedate2', width: 100 },
+                    { field: 'thedate3', title: '质检时间', width: 100 },
+
+                      { field: 'boxno', title: '批次号', width: 100 },
+                    //{ field: 'imagedate', title: 'imagedate', width: 100 },
+                    //{ field: 'imagestate', title: 'imagestate', width: 60 },
+                    { field: 'imagetype', title: '图片类型', width: 60 },
+                  { field: 'guid', title: '随机码', width: 100 },
+                    { field: 'outstate', title: '导出状态', width: 100 }
+
+            ]],
+            onClickRow: function (rowIndex, rowData) {
+                $.post("/management/GetImage_ems", { date: rowData.imagedate, boxno: rowData.boxno, guid: rowData.guid, imagetype: rowData.imagetype }, function (data) {
+                    $("#.win img").attr("src", data);
+                });
+                // $("#win_myobjems img").attr("src", "/management/GetImage_ems?date=" + rowData.imagedate + "&boxno=" + rowData.boxno + "&guid=" + rowData.guid + "&imagetype=" + rowData.imagetype);
+                $('.win').window({
+                    title: '面单及录入信息',
+                    width: 900,
+                    height: 600,
+                    modal: false
+                });
+                //var html = " <table>";
+                //for (var name in rowData) {
+                //    html += "<tr><td>" + name + ":</td><td>" + rowData[name] + "</td></tr>";
+                //}
+                //html += "</table>";
+                var html = " <ul class='urwin'>";
+                html += "<li><span>图片编号:</span><span>" + rowData.imageid + "</span></li>";
+                html += "<li><span>切片类型:</span><span>" + rowData.inputname + "</span></li>";
+                html += "<li style='width:100%' ><span>录&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;入:</span><span>" + rowData.values1 + "</span></li>";
+                //html += "<li><span>图片ID:</span><span>" + rowData.values2 + "</span></li>";
+                html += "<li  style='width:100%'><span>质&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;检:</span><span>" + rowData.values3 + "</span></li>";
+                html += "<li><span>录入状态:</span><span>" + rowData.inputstate + "</span></li>";
+                html += "<li><span>录入用户:</span><span>" + rowData.userid1 + "</span></li>";
+                //html += "<li><span>图片ID:</span><span>" + rowData.userid2 + "</span></li>";
+                html += "<li><span>质检用户:</span><span>" + rowData.userid3 + "</span></li>";
+                html += "<li><span>录入时间:</span><span>" + rowData.thedate1 + "</span></li>";
+                //html += "<li><span>图片ID:</span><span>" + rowData.thedate2 + "</span></li>";
+                html += "<li><span>质检日期:</span><span>" + rowData.thedate3 + "</span></li>";
+
+                html += "<li><span>批&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;次:</span><span>" + rowData.boxno + "</span></li>";
+                //html += "<li><span>imagedate:</span><span>" + rowData.imagedate + "</span></li>";
+                //html += "<li><span>imagestate:</span><span>" + rowData.imagestate + "</span></li>";
+                html += "<li><span>图片类型:</span><span>" + rowData.imagetype + "</span></li>";
+                html += "<li><span>随机码:</span><span>" + rowData.guid + "</span></li>";
+                html += "<li><span>导出状态:</span><span>" + rowData.outstate + "</span></li>";
+                html += "</ul>";
+                $("#win_myobjems .detail").html(html);
+
+            },
+            onLoadError: function (data) {
+                alert("cw")
+            }, onLoadSuccess: function (data) {
+                // compute();
+            }
+        });
+    }
+
+</script>
+<div class="container">
+    <div style="padding:5px"></div>
+
+    <ul class="chaxunkey">
+
+
+        @*<li>选择中心:<input id="my_objcombobox" class="easyui-combobox" data-options="valueField:'id',editable:false,textField:'text',url:'/common/GetObjectCombobox'" /></li>*@
+        <li>图片编号:<input id="myobjemsimage_imageid" class="easyui-textbox" value="" /></li>
+
+        <li>用户 I&nbsp;&nbsp;D:<input id="myobjemsimage_userid" class="easyui-textbox" value="" /></li>
+        <li>图片随机号:<input id="myobjemsimage_guid" class="easyui-textbox" value="" /></li>
+        <li>录入内容:<input id="myobjemsimage_values1" class="easyui-textbox" value="" /></li>
+        @*<li>录入状态:<input id="myobjemsimage_inputstate" class="easyui-textbox" value="" /></li>*@
+
+        <li>
+            <input id="myobjemsfiledtype" class="easyui-combobox" name="dept"
+                   data-options="valueField:'id',editable:false,textField:'text',url:'/common/GetEMS_FileType/11', onLoadSuccess:function(data){ $('#myobjemsfiledtype').combobox('setValue',data[1].id);}" />
+        </li>
+        <li >开始日期:<input id="startdate_myobjems" class="easyui-datebox" editable="false"></li>
+        <li>
+                结束日期:  <input id="enddate_ems" class="easyui-datebox" editable="false">
+            </li>
+        <li><input type="button" value="查询" id="myobjemsimagecommit" class="button_chaxun"></li>
+    </ul>
+    <div style=" clear:both;">
+        <!--<div id="magazineGrid"></div>-->
+        <div style="min-height:300px; min-width:500px;">
+            <div id="myobjemsimagegridview"> </div>
+        </div>
+    </div>
+    <!--创建一个遮罩-->
+    @*<div id="maskpro_user" class="maskpro_user"><div class="gif"><img src="/img/wait.gif"></div></div>*@
+</div>
+<div class="win">
+    <img src="#" style="width:800px;" alt="" />
+    <div class="detail">
+
+
+    </div>
+
+</div>  

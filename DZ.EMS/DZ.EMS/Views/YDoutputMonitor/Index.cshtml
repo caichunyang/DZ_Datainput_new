@@ -1,0 +1,329 @@
+﻿@{
+    ViewBag.Title = "中通产量监控";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style type="text/css">
+    /*body {
+            background: url(img/bg.png) top center no-repeat;
+            background-size: 100%  auto;
+        }*/
+    .mask {
+        position: absolute;
+        top: 0px;
+        filter: alpha(opacity=60);
+        background-color: #777;
+        z-index: 1002;
+        left: 0px;
+        opacity: 0.5;
+    }
+
+    .container {
+        text-align: center;
+    }
+
+    .gif {
+        text-align: center;
+        vertical-align: middle;
+        opacity: 1;
+    }
+
+    .right {
+        float: right;
+        text-align: right;
+    }
+
+    .bor img {
+        display: block;
+        width: auto;
+        max-width: 100%;
+    }
+
+    #gridview {
+        width: 100%;
+       
+    }
+</style>
+
+<ul class="chaxun">
+    <li><input type="button" value="查询" id="commit" class="button_chaxun"></li>
+    <li>开始日期:<input id="startdate" class="easyui-datebox" editable="false"></li>
+    <li>
+        结束日期:  <input id="enddate" class="easyui-datebox" editable="false">
+    </li>
+    <li><input type="button" value="查询今日" id="selectTodaybtn" class="button_chaxun"></li>
+    <li><input type="button" value="查询昨日" id="selectYesterdaybtn" class="button_chaxun"></li>
+</ul>
+<div class="table">
+    <table border="1" cellpadding="0" id="gridview" cellspacing="0" bordercolor="#8496ae" class="tb">
+        <!--<tr>
+            <th>批次编号</th>
+            <th>扫描时间</th>
+            <th>扫描详情单（单）</th>
+            <th>上传详情单（单）</th>
+            <th>失败详情单（单）</th>
+            <th>详情单碎片（单）</th>
+            <th>待录入（单）</th>
+            <th>待质检（单）</th>
+            <th>质检正确（单）</th>
+            <th>质检修正错误（单）</th>
+            <th>逾期倒计时</th>
+            <th>导出记录</th>
+        </tr>-->
+        <thead>
+            <tr>
+                <th>批次号</th>
+                <th>总量</th>
+                <th>录入数量</th>
+                <th>错误数量</th>
+                <th>检查数量</th>
+                <th>检查更正数量</th>
+               
+                <th>逾期倒计时</th>
+                <!--th>导出记录</th>-->
+                <!--<th>上传详情单（单）</th>
+                <th>失败详情单（单）</th>
+                <th>详情单碎片（单）</th>
+                <th>待录入（单）</th>
+                <th>待质检（单）</th>
+                <th>质检正确（单）</th>
+                <th>质检修正错误（单）</th>
+                <th>逾期倒计时</th>
+                <th>导出记录</th>-->
+            </tr>
+        </thead>
+
+
+        <tbody></tbody>
+        <!--<tr class="bt_2">
+        <td>合计：</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>-->
+        <!--<td>&nbsp;</td>-->
+        <!-- <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        </tr>-->
+    </table>
+</div>
+<script type="text/javascript">
+    var array = {};
+    var interval; //调度器对象。
+    var canpost = "true" //默认可以提交
+    var startdate; //开始时间
+    var enddate; //结束时间
+    var DATE_FORMAT = /^[0-9]{4}-[0-1]?[0-9]{2}-[0-3]?[0-9]{2}$/; //用于判断日期格式是否正确
+    //获取窗口百分比的长度
+    function fixWidth(percent) {
+        return document.body.clientWidth * percent; //这里你可以自己做调整
+    }
+    function fixHeight(percent) {
+        return document.documentElement.clientHeight * percent; //这里你可以自己做调整
+    }
+    //检验日期格式是否正确
+    function checkdate(thedate) {
+        if (DATE_FORMAT.test(thedate)) {
+            // alert("您输入的日期格式正确");
+            return "true";
+        } else {
+            alert("抱歉，您输入的日期格式有误，正确格式应为 2016-01-01");
+            return "false";
+        }
+    }
+
+    $(document).ready(function () {
+
+        //默认初始化日期控件不可手动填
+        //$("#startdate").datebox('disable');
+        //默认初始化列表
+        //$('#magazineGrid').datagrid({
+        //    title: '产量列表',
+        //    //width: fixWidth(0.9),
+        //    //height: fixHeight(0.9),
+        //    halign: 'center',
+        //    fitColumns: true,
+        //    columns: [[
+        //        { field: 'UserName', title: '员工帐号', width: 80, align: 'center' },
+        //        { field: 'TheDate', title: '录入日期', width: 80, align: 'center' },
+        //        { field: 'TheNum', title: '录入数量', width: 80, align: 'center' },
+        //        { field: 'ErrNum', title: '错误数量', width: 80, align: 'center' },
+        //        { field: 'CheckNum', title: '检查数量', width: 80, align: 'center' },
+        //        { field: 'CheckErrNum', title: '检查改正数量', width: 80, align: 'center' },
+        //    ]]
+        //});
+        //  alert(newaddress);
+        //兼容火狐、IE8
+        //显示遮罩层
+        function showMask() {
+            $("#mask").css("height", $(document).height());
+            $("#mask").css("width", $(document).width());
+            $("#mask").show();
+        }
+        //隐藏遮罩层
+        function hideMask() {
+            $("#mask").hide();
+        }
+        //默认加载页面隐藏遮罩层
+        $("#mask").hide();
+
+        //安全退出
+        $("#safeexit").click(function () {
+            //开始请求服务器数据
+            $.ajax({
+                type: "POST",
+                url: "YunDaInput.aspx",
+                dataType: "html",
+                data: "type=safeexit",
+                beforeSend: function () {
+                    //显示遮罩层
+                    showMask();
+                    // alert("我要开始提交拉");
+                },
+                success: function (result) {
+                    //隐藏遮罩层
+                    hideMask();
+                    array = result.split("|");
+                    alert(array[1]);
+                    window.location.href = "/login.aspx";
+                },
+                error: function () {
+                    //隐藏遮罩层
+                    hideMask();
+                    alert("发送数据失败,退出失败");
+                }
+            });
+        });
+
+        // 禁止F5刷新
+        $(document).bind("keydown", function (e) {
+            e = window.event || e;
+            if (e.keyCode == 116) {
+                // alert("禁止F5刷新");
+                e.keyCode = 0;
+                return false;
+            }
+        });
+        $("#selectTodaybtn").click(function () {
+            var curr_time = new Date();
+            var strDate = curr_time.getFullYear() + "-";
+            strDate += curr_time.getMonth() + 1 + "-";
+            strDate += curr_time.getDate();
+            $("#startdate").datebox("setValue", strDate);
+            $("#enddate").datebox("setValue", strDate);
+            GetGridata();
+        });
+        $("#selectYesterdaybtn").click(function () {
+            var curr_time = new Date();
+            var strDate = curr_time.getFullYear() + "-";
+            strDate += curr_time.getMonth() + 1 + "-";
+            var start = strDate + (curr_time.getDate() - 1);
+            strDate += curr_time.getDate();
+
+            $("#startdate").datebox("setValue", start);
+            $("#enddate").datebox("setValue", strDate);
+            GetGridata();
+        });
+        //点击按钮提交
+        $("#commit").click(function () {
+            GetGridata();
+        });
+        function GetGridata() {
+            //如果两个录入框都有数据
+            if (canpost == "false") {
+                alert("你查询的速度过快,请喝杯茶稍等片刻再查询...");
+            } else {
+                //赋予日期变量
+                startdate = $('#startdate').datebox('getValue');
+                enddate = $('#enddate').datebox('getValue');
+                //判断日期格式是否正确
+                if (checkdate(startdate) == "true" && checkdate(enddate) == "true") {
+                    postdata();
+                    canpost = "false";
+                }
+            }
+        }
+        //定义计时器间隔
+        function timerun() {
+            // alert("启用定时器间隔");
+            interval = setInterval(timefun, 1000);
+        }
+        //计时器触发事件
+        function timefun() {
+            //  alert("定时器已触发");
+            canpost = "true";
+            clearInterval(interval);
+        }
+
+        function postdata() {
+            //开始请求服务器数据
+            $.ajax({
+                type: "POST",
+                //url: "YunDaInput.aspx",
+                url:"/YDoutputMonitor/YunDaOutPut",
+                dataType: "html",
+                data: "type=showoutput&startdate=" + startdate + "&enddate=" + enddate,
+                beforeSend: function () {
+                    //显示遮罩层
+                    showMask();
+                    //图像改为加载中
+                    $("#img_show").attr('src', "img/img_wait.gif");
+                    // alert("我要开始提交拉");
+                },
+                success: function (result) {
+                    //    alert(result);
+                    //隐藏遮罩层
+                    hideMask();
+                    //设置倒计时,防止刷单
+                    timerun();
+                    //JSON序列化传回的参数
+                    var data = eval("(" + result + ")");
+                    //if (data.Result == 'error') {
+                    //    alert(data.ReturnStr);
+                    //    return false;
+                    //} //如果返回错误弹出错误提示
+                    //if (data.Result == 'nologin') {
+                    //    alert(data.ReturnStr)
+                    //    window.location.href = "/login.aspx";
+                    //    return false;
+                    //} else {
+                        //alert(JSON.stringify(data.ReturnStr));
+                        // var vData = $.parseJSON(JSON.stringify(data.ReturnStr));
+                        //  var vData =data.ReturnStr;
+                        //   $('#magazineGrid').datagrid('loadData', data.ReturnStr); //将数据绑定到datagrid
+                        var html = ""; var cls = "";
+                        var tongji = { TheNum: 0,Noinput:0, Input: 0, checkpass: 0, checkerr: 0 };
+                        $.each(data, function (i, item) {
+                            cls = i % 2 == 0 ? "bt_2" : "";
+                            tongji.TheNum += item.TheNum;
+                            // alert(tongji.TheNum);
+                            tongji.Noinput += item.Noinput;
+                            tongji.Input += item.Input;
+                            tongji.checkpass += item.checkpass;
+                            tongji.checkerr += item.checkerr;
+                            html += "<tr class='" + cls + "'><td>" + item.BoxNo + "</td><td>" + item.TheNum + "</td><td>"
+                                + item.Noinput + "</td><td>" + item.Input + "</td><td>" + item.checkpass + "</td><td>" + item.checkerr + "</td><td>" + "积分" + "</td></tr>";
+                        });
+                        html += "<tr class='bt_2'><td>合计：</td> <td>" + tongji.TheNum + "</td><td>" + tongji.Noinput + "</td><td>" + tongji.Input + "</td><td>" + tongji.checkpass + "</td><td>" + tongji.checkerr + "</td><td>" + "积分" + "</td>"
+
+                        $("#gridview tbody").html(html);
+                   // }
+                },
+                error: function () {
+                    //隐藏遮罩层
+                    hideMask();
+                    //设置倒计时,防止刷单
+                    timerun();
+                    alert("获取数据失败");
+                    $("#img_show").attr('src', "/img/no_img.jpg");
+                }
+            });
+            //    showMask();
+        }
+        //默认执行请求
+        // postdata();
+    });
+</script>

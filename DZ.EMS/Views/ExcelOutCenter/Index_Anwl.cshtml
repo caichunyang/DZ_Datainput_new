@@ -1,0 +1,302 @@
+﻿@{
+    ViewBag.Title = "Index_Anwl";
+    Layout = null;
+}
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+@*<link href="~/Content/css/task.css" rel="stylesheet" />*@
+<link href="~/content/css/headfoot.css" rel="stylesheet" />
+<script src="~/Scripts/mycommon.js"></script>
+<style>
+    /*#uldetail{ visibility:hidden;}*/
+    #uldetail {
+        display: none;
+    }
+
+    #w span {
+        float: left;
+    }
+
+    .btn_a {
+        display: block;
+        height: 30px;
+        width: 120px;
+        background: #20742b;
+        line-height: 30px;
+        color: white;
+        font-size: large;
+        text-align: center;
+        margin: 0 5px;
+    }
+</style>
+
+<div class="container">
+    <div style="padding:5px"></div>
+
+    <ul class="chaxun">
+        <li><input type="button" value="今日" id="selectTodaybtnallexcel_anwl" class="button_chaxun"></li>
+        <li><input type="button" value="昨天" id="selectYesterdaybtnallexcel_anwl" class="button_chaxun"></li>
+
+        <li>查询日期:<input id="startallexcel_anwl" class="easyui-datebox" editable="false"></li>
+        @*<li>
+                    结束日期:  <input id="endallexcel_anwl" class="easyui-datebox" editable="false">
+                </li>
+            <li>选择中心:<input id="allexcel_anwlbobox" class="easyui-combobox" data-options="valueField:'id',editable:false,textField:'text',url:'/common/GetObjectCombobox/1'" /></li>
+        *@
+        <li><input type="button" value="查询" id="commitallexcel_anwl" class="button_chaxun"></li>
+    </ul>
+    <div style="margin:0px 50px auto;  ">
+        <!--<div id="magazineGrid"></div>-->
+        <div style="min-height:300px;">
+            <div id="datagridallexcel_anwl"> </div>
+        </div>
+    </div>
+</div>
+<div id="w" class="easyui-window" title="下载提示" data-options="modal:true,closed:true,iconCls:'icon-tip'" style="width:500px;height:200px;padding:10px;">
+
+</div>
+<script type="text/javascript">
+    var array = {};
+    var interval; //调度器对象。
+    var canpost = "true" //默认可以提交
+    var startallexcel_anwl; //开始时间
+    var endallexcel_anwl; //结束时间
+    var DATE_FORMAT = /^[0-9]{4}-[0-1]?[0-9]{2}-[0-3]?[0-9]{2}$/; //用于判断日期格式是否正确
+    //获取窗口百分比的长度
+    function fixWidth(percent) {
+        return document.body.clientWidth * percent; //这里你可以自己做调整
+    }
+    function fixHeight(percent) {
+        return document.documentElement.clientHeight * percent; //这里你可以自己做调整
+    }
+    //检验日期格式是否正确
+    function checkdate(thedate) {
+        if (DATE_FORMAT.test(thedate)) {
+            // alert("您输入的日期格式正确");
+            return "true";
+        } else {
+            alert("抱歉，您输入的日期格式有误，正确格式应为 2016-01-01");
+            return "false";
+        }
+    }
+    var all_objid = -1;
+    var all_objname = "";
+    $(function () {
+        //兼容火狐、IE8
+        //显示遮罩层
+        function showMask() {
+            $("#maskallexcel_anwl").css("height", $(document).height());
+            $("#maskallexcel_anwl").css("width", $(document).width());
+            $("#maskallexcel_anwl").show();
+        }
+
+        //隐藏遮罩层
+        //function hideMask() {
+        //    $("#maskallexcel_anwl").hide();
+        //}
+        //默认加载页面隐藏遮罩层
+        //$("#maskallexcel_anwl").hide();
+
+
+        // 禁止F5刷新
+        $(document).bind("keydown", function (e) {
+            e = window.event || e;
+            if (e.keyCode == 116) {
+                // alert("禁止F5刷新");
+                e.keyCode = 0;
+                return false;
+            }
+        });
+        $("#selectTodaybtnallexcel_anwl").click(function () {
+            $("#startallexcel_anwl").datebox("setValue", datenowstr());
+            GetGridata();
+        });
+        $("#selectYesterdaybtnallexcel_anwl").click(function () {
+            $("#startallexcel_anwl").datebox("setValue", dateaddstr(-1));
+            GetGridata();
+        });
+        //点击按钮提交
+        $("#commitallexcel_anwl").click(function () {
+            GetGridata();
+        });
+        function GetGridata() {
+
+            //如果两个录入框都有数据
+            if (canpost == "false") {
+                alert("你查询的速度过快,请喝杯茶稍等片刻再查询...");
+            } else {
+                //赋予日期变量
+                startallexcel_anwl = $('#startallexcel_anwl').datebox('getValue');
+                //  endallexcel_anwl = $('#endallexcel_anwl').datebox('getValue');
+                //判断日期格式是否正确
+                downloadExcel_anwl(startallexcel_anwl);
+                // postdata_users(startallexcel_anwl);//endallexcel_anwl
+                canpost = "false";
+
+            }
+        }
+
+    });
+    //定义计时器间隔
+    function timerun() {
+        // alert("启用定时器间隔");
+        interval = setInterval(timefun, 1000);
+    }
+    //计时器触发事件
+    function timefun() {
+        //  alert("定时器已触发");
+        canpost = "true";
+        clearInterval(interval);
+    }
+    //var objname = "";
+
+
+    function downloadExcel_anwl(start) {
+
+        //隐藏遮罩层
+        //hideMask();
+        //        //设置倒计时,防止刷单
+        timerun();
+        // var allcount = 0;
+        //alert(startallexcelout);
+        $("#datagridallexcel_anwl").datagrid({
+            //url: '/ExcelOutCenter/GetRecivNum_anwl',
+            url: '/ExcelOutCenter/GetBoxNum_anwl',
+            queryParams: { thedate: start },
+            rownumbers: true,
+            fitColumns: true,
+            columns: [[
+                {
+                    field: 'boxno', title: '批次号', width: 150, align: 'center'
+                },
+                { field: 'a', title: '等待录入(切片)', width: 150, align: 'center' }
+                , { field: 'b', title: '等待质检(切片)', width: 150, align: 'center' }
+                 , { field: 'f', title: '退单数量', width: 150, align: 'center', styler: function (value, row, index) { if (value > 0) { return 'color:red;cursor:pointer'; } } },
+                 {
+                     field: 'c', title: '已经质检无错误(切片)', width: 150,align:'center'
+                 },
+                { field: 'd', title: '已经质检已改正(切片)', width: 150, align: 'center' },
+                { field: 'e', title: '上传单量(整单)', width: 150, align: 'center' },
+                  { field: 'g', title: '切片量', width: 150, align: 'center' },
+                    { field: 'h', title: '补录量', width: 150, align: 'center' },
+                     { field: 'userid', title: '上传账号', width: 150, align: 'center' },
+                {
+                    field: 'sum2', title: '操作', width: 120, align: 'center', formatter: function (value, row, index) {
+                        if (value!=0) {
+                            var btn = "<input type='button' class='editcls' onclick=\"downloadExcelbtn_anwl(" + index + ",0)\" value='下载数据'/>";
+                            return btn;
+                        }
+
+                    }
+                }
+                //,
+                // {
+                //     field: 'sf', title: '退单重检', align: 'center', width: 120, formatter: function (value, row, index) {
+                //         if (value != 0) {
+                //             var btn = "<input type='button' class='editcls' onclick=\"StartReCheck('" + row.boxno + "')\" value='重新质检该批次'/>";
+                //             // btn += "&nbsp;&nbsp;&nbsp;&nbsp;<a class='editcls' onclick=\"downloadExcelbtn_anwl(" + index + ",1)\" href='javascript:void(0)'>下载异常数据</a>"
+                //             return btn;
+                //         }
+                //     }
+                // }
+            ]],
+            onClickCell: function (rowIndex, field, value) {
+                if (field == 'f') {
+                    if (parseInt(value)>0) {
+                        var row = $('#datagridallexcel_anwl').datagrid('getRows')[rowIndex];
+                      //  StartReCheck(row.boxno);
+                    }
+
+                }
+            },
+            onLoadError: function () {
+                alert("cw")
+            }
+            , onLoadSuccess: function (data) {
+                var rows = $('#datagridallexcel_anwl').datagrid('getRows')//获取当前的数据行
+                var newrow = {
+                    boxno: "<b>合计</b>",
+                    a: 0,
+                    b: 0,
+                    c: 0,
+                    d: 0,
+                    e: 0,
+                    f: 0,
+                    g: 0,
+                    h: 0,
+                    sum2: 0,
+                    sf: 0
+                };
+                // var allcount1 = 0;
+                for (var i = 0; i < rows.length; i++) {
+                    newrow.a += parseInt(rows[i]['a']);
+                    newrow.b += parseInt(rows[i]['b']);
+                    newrow.c += parseInt(rows[i]['c']);
+                    newrow.d += parseInt(rows[i]['d']);
+                    newrow.e += parseInt(rows[i]['e']);
+                    newrow.f += parseInt(rows[i]['f']);
+                    newrow.g += parseInt(rows[i]['g']);
+                    newrow.h += parseInt(rows[i]['h']);
+                  
+                }
+                //新增一行显示统计信息
+                $('#datagridallexcel_anwl').datagrid('appendRow', newrow);
+            }
+        });
+
+
+    }
+    //function StartReCheck(boxno) {
+    //    if (confirm("确认将退单数据重新质检")) {
+    //        $.post("/management/StartReCheck", { boxno: boxno }, function (data) {
+    //            if (data>=0) {
+    //                alert(data + "条数据已提交重新质检");
+    //            } else {
+    //                alert(data);
+    //            }
+
+    //        });
+    //    }
+    //}
+    function downloadExcelbtn_anwl(index, type) {
+        var row = $('#datagridallexcel_anwl').datagrid('getRows')[index];
+        var obj = { type: type, boxno: row.boxno, userid: row.userid }//,objectid:myobjid,objectname:myobjname
+
+        $.post("/ExcelOutCenter/Download_pub", obj, function (data) {
+            if (data.msg) {
+                alert(data.msg);
+            }
+            if (data.urllist.length > 0) {
+                var html = "<h3>该批次已经被下载过" + data.length + "次,确认再次下载？</h3><br/><span><a class='btn_a' href='" + data.url + "'>确认下载</a></span><span><a class='btn_a' href=\"javascript:winclose();\">取消</a></span><span style='margin-top:12px;'><a href='javascript:downdetail();'>下载详情</a></span>";
+                var ulstr = "<div style='clear:both;'></div><ul id='uldetail'><li>" + "" + "</li>";
+                $.each(data.urllist, function (i, item) {
+                    //var temparr = item.split('_')
+                    ulstr += "<li>" + item + "</li>";
+                });
+                ulstr += "</ul>";
+                //alert(ulstr);
+                //html = $('#w').html() + ulstr;
+                $('#w').html(html + ulstr);
+                $('#w').window('open');
+                return;
+                //if (confirm("该批次已经被下载过" + arr[1] + "次,确认再次下载？")) {
+                //    window.location.href = arr[0];
+                //}
+            }
+            if (data.url) {
+                window.location.href = data.url;
+            }
+        }, 'json');
+    }
+    function downdetail() {
+        $("#uldetail").css("display", "block");
+    }
+    function winclose() {
+        $('#w').window('close');
+    }
+</script>

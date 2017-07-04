@@ -1,0 +1,239 @@
+﻿@{
+    ViewBag.Title = "CenterAnalysis_ems";
+    Layout = null;
+}
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+@*<link href="~/Content/css/task.css" rel="stylesheet" />*@
+<link href="~/content/css/headfoot.css" rel="stylesheet" />
+<script src="~/Scripts/mycommon.js"></script>
+<style type="text/css">
+    /*body {
+            background: url(img/bg.png) top center no-repeat;
+            background-size: 100%  auto;
+        }*/
+    .maskcenter_ems {
+        position: absolute;
+        top: 0px;
+        filter: alpha(opacity=60);
+        background-color: #777;
+        z-index: 1002;
+        left: 0px;
+        opacity: 0.5;
+    }
+
+    .container {
+        text-align: center;
+    }
+
+    .gif {
+        text-align: center;
+        vertical-align: middle;
+        opacity: 1;
+    }
+
+    .right {
+        float: right;
+        text-align: right;
+    }
+
+    .bor img {
+        display: block;
+        width: auto;
+        max-width: 100%;
+    }
+
+    #gridview {
+        width: 100%;
+        min-height: 500px;
+    }
+</style>
+
+<div class="container">
+    <div style="padding:5px"></div>
+
+    <ul class="chaxun">
+        <li><input type="button" value="查询" id="commitcenter_ems" class="button_chaxun"></li>
+        <li>开始日期:<input id="startcenter_ems" class="easyui-datebox" editable="false"></li>
+        <li>
+            结束日期:  <input id="endcenter_ems" class="easyui-datebox" editable="false">
+        </li>
+        <li><input type="button" value="查询今日" id="selectTodaybtncenter_ems" class="button_chaxun"></li>
+        <li><input type="button" value="查近两天" id="selectYesterdaybtncenter_ems" class="button_chaxun"></li>
+    </ul>
+    <div style="margin:0px 50px auto;  ">
+        <!--<div id="magazineGrid"></div>-->
+        <div style="min-height:300px;">
+            <div id="datagridcenter_ems"> </div>
+        </div>
+    </div>
+    <!--创建一个遮罩-->
+    <div id="maskcenter_ems" class="maskcenter_ems"><div class="gif"><img src="img/wait.gif"></div></div>
+</div>
+<script type="text/javascript">
+    var array = {};
+    var interval; //调度器对象。
+    var canpost = "true" //默认可以提交
+    var startcenter_ems; //开始时间
+    var endcenter_ems; //结束时间
+    var DATE_FORMAT = /^[0-9]{4}-[0-1]?[0-9]{2}-[0-3]?[0-9]{2}$/; //用于判断日期格式是否正确
+    //获取窗口百分比的长度
+    function fixWidth(percent) {
+        return document.body.clientWidth * percent; //这里你可以自己做调整
+    }
+    function fixHeight(percent) {
+        return document.documentElement.clientHeight * percent; //这里你可以自己做调整
+    }
+    //检验日期格式是否正确
+    function checkdate(thedate) {
+        if (DATE_FORMAT.test(thedate)) {
+            // alert("您输入的日期格式正确");
+            return "true";
+        } else {
+            alert("抱歉，您输入的日期格式有误，正确格式应为 2016-01-01");
+            return "false";
+        }
+    }
+
+    $(function () {
+        //兼容火狐、IE8
+        //显示遮罩层
+        function showMask() {
+            $("#maskcenter_ems").css("height", $(document).height());
+            $("#maskcenter_ems").css("width", $(document).width());
+            $("#maskcenter_ems").show();
+        }
+        //隐藏遮罩层
+        function hideMask() {
+            $("#maskcenter_ems").hide();
+        }
+        //默认加载页面隐藏遮罩层
+        $("#maskcenter_ems").hide();
+
+
+        // 禁止F5刷新
+        $(document).bind("keydown", function (e) {
+            e = window.event || e;
+            if (e.keyCode == 116) {
+                // alert("禁止F5刷新");
+                e.keyCode = 0;
+                return false;
+            }
+        });
+        $("#selectTodaybtncenter_ems").click(function () {
+            var curr_time = new Date();
+            var strDate = curr_time.getFullYear() + "-";
+            strDate += curr_time.getMonth() + 1 + "-";
+            strDate += curr_time.getDate();
+            $("#startcenter_ems").datebox("setValue", strDate);
+            $("#endcenter_ems").datebox("setValue", strDate);
+            GetGridata();
+        });
+        $("#selectYesterdaybtncenter_ems").click(function () {
+            var curr_time = new Date();
+            var strDate = curr_time.getFullYear() + "-";
+            strDate += curr_time.getMonth() + 1 + "-";
+            var start = strDate + (curr_time.getDate() - 1);
+            strDate += curr_time.getDate();
+
+            $("#startcenter_ems").datebox("setValue", start);
+            $("#endcenter_ems").datebox("setValue", strDate);
+            GetGridata();
+        });
+        //点击按钮提交
+        $("#commitcenter_ems").click(function () {
+            GetGridata();
+        });
+        function GetGridata() {
+
+            //如果两个录入框都有数据
+            if (canpost == "false") {
+                alert("你查询的速度过快,请喝杯茶稍等片刻再查询...");
+            } else {
+                //赋予日期变量
+                startcenter_ems = $('#startcenter_ems').datebox('getValue');
+                endcenter_ems = $('#endcenter_ems').datebox('getValue');
+                //判断日期格式是否正确
+                if (checkdate(startcenter_ems) == "true" && checkdate(endcenter_ems) == "true") {
+                    postdata_users(startcenter_ems, endcenter_ems);
+                    canpost = "false"; postdata_users
+                }
+            }
+        }
+        //定义计时器间隔
+        function timerun() {
+            // alert("启用定时器间隔");
+            interval = setInterval(timefun, 1000);
+        }
+        //计时器触发事件
+        function timefun() {
+            //  alert("定时器已触发");
+            canpost = "true";
+            clearInterval(interval);
+        }
+
+        function postdata_users(startcenter_ems, endcenter_ems) {
+           
+            //$.post("/ShowOutPut/GetImage_rc_up", { startdate: startcenter_ems, enddate: endcenter_ems ,casekey:"yd"}, function (data) {
+
+            //},'json');
+            //隐藏遮罩层
+            hideMask();
+            //        //设置倒计时,防止刷单
+            timerun();
+            // var allcount = 0;
+            $("#datagridcenter_ems").datagrid({
+                //url: '/ShowOutPut/GetImage_rc_up',
+                url: '/ShowOutPut/CenterAnalysis_emsTJ',
+                queryParams: { startdate: startcenter_ems, enddate: endcenter_ems},
+                rownumbers: true,
+               
+                columns: [[
+                    {
+                        field: 'id', title: 'ID', width: 100
+
+                    },
+                    { field: 'centername', title: '中心', width: 100 }
+                    , { field: 'count', title: '接收', width: 100 },
+                     {
+                         field: 'datestr', title: '日期', width: 100 },
+                    { field: 'filetype', title: '上传量', width: 100 },
+                    { field: 'sum', title: '按中心统计', width: 100 },
+                    { field: 'sum2', title: '按日期统计', width: 100 }
+                ]],
+                onLoadError: function () {
+                    alert("cw")
+                }
+                , onLoadSuccess: function (data) {
+                    compute();
+                }
+            });
+
+            function compute() {//计算函数
+                var rows = $('#datagridcenter_ems').datagrid('getRows')//获取当前的数据行
+                var allcount = 0;
+                //var allcount1 = 0;
+                //var allcount2 = 0;
+                for (var i = 0; i < rows.length; i++) {
+                   
+                        allcount += parseInt(rows[i]['count']);
+                        //allcount1 += parseInt(rows[i]['sum']);
+                        //allcount2 += parseInt(rows[i]['sum2']);
+                    //}
+                 
+                }
+                //新增一行显示统计信息
+                $('#datagridcenter_ems').datagrid('appendRow', { id: '<b>统计</b>', count: allcount });//, sum: allcount1, sum2: allcount2 
+
+            }
+
+        }
+        //默认执行请求
+        // postdata_users();
+    });
+</script>

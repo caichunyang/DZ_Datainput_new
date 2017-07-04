@@ -1,0 +1,239 @@
+﻿@{
+    ViewBag.Title = "中心产量查询";
+    Layout = null;
+}
+<style type="text/css">
+    /*body {
+            background: url(img/bg.png) top center no-repeat;
+            background-size: 100%  auto;
+        }*/
+    .mask_center {
+        position: absolute;
+        top: 0px;
+        filter: alpha(opacity=60);
+        background-color: #777;
+        z-index: 1002;
+        left: 0px;
+        opacity: 0.5;
+    }
+
+    .container {
+        text-align: center;
+    }
+
+    .gif {
+        text-align: center;
+        vertical-align: middle;
+        opacity: 1;
+    }
+
+    .right {
+        float: right;
+        text-align: right;
+    }
+
+    .bor img {
+        display: block;
+        width: auto;
+        max-width: 100%;
+    }
+
+    #gridview {
+        width: 100%;
+        min-height: 500px;
+    }
+</style>
+
+<div class="container">
+    <div style="padding:5px"></div>
+
+    <ul class="chaxun">
+        <li><input type="button" value="查询" id="commit_users" class="button_chaxun"></li>
+        <li>开始日期:<input id="start_center" class="easyui-datebox" editable="false"></li>
+        <li>
+            结束日期:  <input id="end_center" class="easyui-datebox" editable="false">
+        </li>
+        <li><input type="button" value="查询今日" id="selectTodaybtn_center" class="button_chaxun"></li>
+        <li><input type="button" value="查近两天" id="selectYesterdaybtn_center" class="button_chaxun"></li>
+    </ul>
+    <div style="margin:0px 50px auto;  ">
+        <!--<div id="magazineGrid"></div>-->
+        <div style="min-height:300px;">
+            <div id="datagrid_center"> </div>
+        </div>
+    </div>
+    <!--创建一个遮罩-->
+    <div id="mask_center" class="mask_center"><div class="gif"><img src="/img/wait.gif"></div></div>
+</div>
+<script type="text/javascript">
+    var array = {};
+    var interval; //调度器对象。
+    var canpost = "true" //默认可以提交
+    var start_center; //开始时间
+    var end_center; //结束时间
+    var DATE_FORMAT = /^[0-9]{4}-[0-1]?[0-9]{2}-[0-3]?[0-9]{2}$/; //用于判断日期格式是否正确
+    //获取窗口百分比的长度
+    function fixWidth(percent) {
+        return document.body.clientWidth * percent; //这里你可以自己做调整
+    }
+    function fixHeight(percent) {
+        return document.documentElement.clientHeight * percent; //这里你可以自己做调整
+    }
+    //检验日期格式是否正确
+    function checkdate(thedate) {
+        if (DATE_FORMAT.test(thedate)) {
+            // alert("您输入的日期格式正确");
+            return "true";
+        } else {
+            alert("抱歉，您输入的日期格式有误，正确格式应为 2016-01-01");
+            return "false";
+        }
+    }
+
+    $(document).ready(function () {
+
+        //默认初始化日期控件不可手动填
+        //$("#start_center").datebox('disable');
+        //默认初始化列表
+        //$('#magazineGrid').datagrid({
+        //    title: '产量列表',
+        //    //width: fixWidth(0.9),
+        //    //height: fixHeight(0.9),
+        //    halign: 'center',
+        //    fitColumns: true,
+        //    columns: [[
+        //        { field: 'UserName', title: '员工帐号', width: 80, align: 'center' },
+        //        { field: 'TheDate', title: '录入日期', width: 80, align: 'center' },
+        //        { field: 'TheNum', title: '录入数量', width: 80, align: 'center' },
+        //        { field: 'ErrNum', title: '错误数量', width: 80, align: 'center' },
+        //        { field: 'CheckNum', title: '检查数量', width: 80, align: 'center' },
+        //        { field: 'CheckErrNum', title: '检查改正数量', width: 80, align: 'center' },
+        //    ]]
+        //});
+        //  alert(newaddress);
+        //兼容火狐、IE8
+        //显示遮罩层
+        function showMask() {
+            $("#mask_center").css("height", $(document).height());
+            $("#mask_center").css("width", $(document).width());
+            $("#mask_center").show();
+        }
+        //隐藏遮罩层
+        function hideMask() {
+            $("#mask_center").hide();
+        }
+        //默认加载页面隐藏遮罩层
+        $("#mask_center").hide();
+
+        //$("#datagrid_center").datagrid({
+        //    url:'',
+        //    columns:[[
+        //        {field:'count',title:'数量',width:100},
+        //        {field:'name',title:'Name',width:100}
+        //    ]]
+        //});
+
+
+        // 禁止F5刷新
+        $(document).bind("keydown", function (e) {
+            e = window.event || e;
+            if (e.keyCode == 116) {
+                // alert("禁止F5刷新");
+                e.keyCode = 0;
+                return false;
+            }
+        });
+        $("#selectTodaybtn_center").click(function () {
+            var curr_time = new Date();
+            var strDate = curr_time.getFullYear() + "-";
+            strDate += curr_time.getMonth() + 1 + "-";
+            strDate += curr_time.getDate();
+            $("#start_center").datebox("setValue", strDate);
+            $("#end_center").datebox("setValue", strDate);
+            GetGridata();
+        });
+        $("#selectYesterdaybtn_center").click(function () {
+            var curr_time = new Date();
+            var strDate = curr_time.getFullYear() + "-";
+            strDate += curr_time.getMonth() + 1 + "-";
+            var start = strDate + (curr_time.getDate() - 1);
+            strDate += curr_time.getDate();
+
+            $("#start_center").datebox("setValue", start);
+            $("#end_center").datebox("setValue", strDate);
+            GetGridata();
+        });
+        //点击按钮提交
+        $("#commit_users").click(function () {
+            GetGridata();
+        });
+        function GetGridata() {
+
+            //如果两个录入框都有数据
+            if (canpost == "false") {
+                alert("你查询的速度过快,请喝杯茶稍等片刻再查询...");
+            } else {
+                //赋予日期变量
+                start_center = $('#start_center').datebox('getValue');
+                end_center = $('#end_center').datebox('getValue');
+                //判断日期格式是否正确
+                if (checkdate(start_center) == "true" && checkdate(end_center) == "true") {
+                    postdata_users(start_center, end_center);
+                    canpost = "false"; postdata_users
+                }
+            }
+        }
+        //定义计时器间隔
+        function timerun() {
+            // alert("启用定时器间隔");
+            interval = setInterval(timefun, 1000);
+        }
+        //计时器触发事件
+        function timefun() {
+            //  alert("定时器已触发");
+            canpost = "true";
+            clearInterval(interval);
+        }
+
+        function postdata_users(start_center, end_center) {
+            //隐藏遮罩层
+            hideMask();
+            //        //设置倒计时,防止刷单
+            timerun();
+            $("#datagrid_center").datagrid({
+                url: '/ShowOutPut/GetCenteroutputTJ',
+                queryParams: { startdate: start_center, enddate: end_center },
+                rownumbers: true,
+                columns: [[
+                      {
+                          field: 'id', title: '中心ID', width: 100
+                      },
+                      { field: 'centername', title: '所属', width: 100 }
+,
+                    {
+                        field: 'count', title: '数量', width: 100
+                    }
+
+                ]], onLoadSuccess: function (data) {
+
+                    compute();
+                }
+            });
+
+            function compute() {//计算函数
+                var rows = $('#datagrid_center').datagrid('getRows')//获取当前的数据行
+                var allcount = 0;
+
+                for (var i = 0; i < rows.length; i++) {
+                    allcount += parseInt(rows[i]['count']);
+                }
+                //新增一行显示统计信息
+                $('#datagrid_center').datagrid('appendRow', { id: '', centername: '<b>统计:</b>', count: allcount });
+
+            }
+
+        }
+        //默认执行请求
+        // postdata_users();
+    });
+</script>

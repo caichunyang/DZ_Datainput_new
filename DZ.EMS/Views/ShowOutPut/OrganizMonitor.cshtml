@@ -1,0 +1,164 @@
+﻿@{
+    ViewBag.Title = "OrganizMonitor";
+    Layout = "~/Views/Shared/_Layoutnull.cshtml";
+}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+         color: #303030;
+           font: normal 12px/24px tahoma,verdana,"宋体";
+    }
+
+    .innertab {
+        border-top: 1px solid #ccc;
+        border-left: 1px solid #ccc;
+        width: 100%;
+    }
+      .list_tit td {
+            color: #5482B4;
+            text-align: center;
+            font-weight: bold;
+        }
+        .innertab td {
+            margin: 0;
+            padding: 0;
+            border-right: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+            text-align: center;
+             
+        }
+
+      
+</style>
+<script>
+    function GetData() {
+
+        var url = "http://114.215.16.58:8081/Pages/Monitor/MonitorHandler.ashx?key=njorg";
+        $.ajax({
+            url: url,
+            dataType: "jsonp",
+            jsonpCallback: "callback",
+            success: function (obj) {
+                // alert(JSON.stringify(data));
+                $("#timestr").html(obj.time);
+                var html = "<table class='innertab' cellpadding='0' cellspacing='0'>";
+                html += $("#hidhtm").html();
+                var sumobj = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ];
+
+                $.each(obj.data, function (i, item) {
+                    var innerhtm = "<tr>";
+                    innerhtm += "<td>" + item.Project.ProjectName + "</td>";
+                    innerhtm += "<td>" + item.DRYL_NJ1_JR + "</td>";
+                    innerhtm += "<td>" + item.DRYL_NJ2_JR + "</td>";
+                    innerhtm += "<td>" + item.NJ_UploadCount + "</td>";
+                    innerhtm += "<td>" + item.WL_NJ1_YL + "</td>";
+                    innerhtm += "<td>" + item.WL_NJ1_JR + "</td>";
+                    innerhtm += "<td>" + item.WL_NJ2_YL + "</td>";
+                    innerhtm += "<td>" + item.WL_NJ2_JR + "</td>";
+                    innerhtm += "<td>" + item.NJ_NeedCount + "</td>";
+
+                    innerhtm += "<td>" + item.DTWC_NJ1_YL + "</td>";
+                    innerhtm += "<td>" + item.DTWC_NJ1_JR + "</td>";
+                    innerhtm += "<td>" + item.DTWC_NJ2_YL + "</td>";
+                    innerhtm += "<td>" + item.DTWC_NJ2_JR + "</td>";
+                    innerhtm += "<td>" + item.NJ_InputCount + "</td>";
+
+                    innerhtm += "<td>" + item.CS_YL + "</td>";
+                    innerhtm += "<td>" + item.CS_DSH + "</td>";
+                    innerhtm += "<td>" + item.CS_YSH + "</td>";
+                    innerhtm += "</tr>"
+
+                    sumobj[0] += item.DRYL_NJ1_JR;
+
+                    // alert(sumobj.DRYL_NJ1_JR);
+                    sumobj[1] += item.DRYL_NJ2_JR;
+                    sumobj[2] += item.NJ_UploadCount;
+                    sumobj[3] += item.WL_NJ1_YL;
+                    sumobj[4] += item.WL_NJ1_JR;
+                    sumobj[5] += item.WL_NJ2_YL;
+                    sumobj[6] += item.WL_NJ2_JR;
+                    sumobj[7] += item.NJ_NeedCount;
+                    sumobj[8] += item.DTWC_NJ1_YL;
+                    sumobj[9] += item.DTWC_NJ1_JR;
+                    sumobj[10] += item.DTWC_NJ2_YL;
+                    sumobj[11] += item.DTWC_NJ2_JR;
+                    sumobj[12] += item.NJ_InputCount;
+                    sumobj[13] += item.CS_YL;
+                    sumobj[14] += item.CS_DSH;
+                    sumobj[15] += item.CS_YSH;
+
+                    html += innerhtm;
+                });
+                var sumhtm = "<tr><td>合计</td>";
+                for (var item in sumobj) {
+                    sumhtm += "<td>" + sumobj[item] + "</td>";
+                    if (item >= 15) {
+                        break;
+                    }
+                }
+                html += sumhtm + "</tr>";
+                html += "</table>";
+                $('.maitab').html(html);
+            },
+            error: function (d, b) {
+                alert(d + b);
+            }
+
+        });
+    }
+    $(function () {
+        GetData();
+    });
+</script>
+<table id="hidhtm" style="display:none;">
+    <thead>
+        <tr class="list_tit">
+            <td rowspan="3">
+                项目
+            </td>
+            <td colspan="3">
+                上传单量
+            </td>
+            <td colspan="5">
+                待录单量
+            </td>
+            <td colspan="5">
+                当天录单完成量
+            </td>
+            <td colspan="3">
+                重扫量
+            </td>
+        </tr>
+        <tr class="list_tit">
+            <td rowspan="2">南京一频</td>
+            <td rowspan="2">南京二频</td>
+            <td rowspan="2">合计</td>
+
+            <td colspan="2">南京一频</td>
+            <td colspan="2">南京二频</td>
+            <td rowspan="2">合计</td>
+
+            <td colspan="2">南京一频</td>
+            <td colspan="2">南京二频</td>
+            <td rowspan="2">合计</td>
+
+            <td rowspan="2">遗留</td>
+            <td rowspan="2">待审核</td>
+            <td rowspan="2">已审核</td>
+        </tr>
+        <tr>
+            <td>遗留</td>
+            <td>今日</td>
+            <td>遗留</td>
+            <td>今日</td>
+
+            <td>遗留</td>
+            <td>今日</td>
+            <td>遗留</td>
+            <td>今日</td>
+        </tr>
+    </thead>
+</table>
+<div style=" text-align:right;height:30px; line-height:30px; font-size:14px; padding:0 15px;"><span>数据更新时间：</span><span id="timestr"></span></div>
+<div class="maitab"></div>

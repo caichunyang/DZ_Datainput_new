@@ -1,0 +1,28 @@
+﻿@{
+    ViewBag.Title = "任务中心";
+      Layout = null;
+}
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+<link href="~/Content/css/task.css" rel="stylesheet" />
+
+<script src="~/Scripts/mycommon.js"></script>
+<script>
+    $(function () {
+        
+        var str = "http://www.dzlur.com/login.aspx?type=login&username=" + '@ViewBag.usfgdfd' + "&password=" + '@ViewBag.dsfsdg'; 
+        //setTimeout(function () {
+        //    alert(1);
+        //    window.location.href = "http://www.dzlur.com/index.html"
+        //}, 1000)
+        window.location.href = str;
+      
+       // window.location.href = "http://www.dzlur.com/index.html"
+
+    });
+</script>

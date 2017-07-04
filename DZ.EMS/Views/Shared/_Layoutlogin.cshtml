@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+    <head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <meta charset="utf-8" />
+        <title>@ViewBag.Title</title>
+        <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+        <meta name="viewport" content="width=device-width" />
+        @*@Styles.Render("~/Content/css")
+                @Scripts.Render("~/bundles/modernizr")*@
+     
+      
+
+        <link href="~/Content/css/normalize.css" rel="stylesheet" />
+        <link href="~/Content/fonts/font-awesome-4.2.0/css/font-awesome.min.css" rel="stylesheet" />
+        <link href="~/Content/css/demos.css" rel="stylesheet" />
+        <link href="~/Content/css/component.css" rel="stylesheet" />
+        @*<link rel="stylesheet" type="text/css" href="easyui/themes/default/easyui.css">
+        <link rel="stylesheet" type="text/css" href="easyui/themes/icon.css">*@
+        <script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+                <link href="~/Content/table.css" rel="stylesheet" />
+    </head>
+    <body style="background:#F2F2F2">
+        <div class="head">
+            <div class="head_content">
+                <ul class="logo">
+                    <a href="/">
+                        <div><img src="../images/Logo.png" /></div>
+                        <div class="logo_title">欢迎来到大政任务</div>
+                    </a>
+                </ul>
+            </div>
+        </div>
+        <!-- 头部 end -->
+       
+                @RenderBody()
+         
+        @*<div class="footer" style="position:fixed; bottom:0px;">
+            <ul>
+                <li>帮助支持</li>
+                <li><a href="#">页面极速(已关闭)</a> <a href="#">Cookie</a></li>
+                <li>©2010-2016 武汉大政天朗技术有限公司 版权所有。<a href="#">苏ICP备13035983号</a></li>
+                <li>测试版1.5.14.1234</li>
+            </ul>
+            <ul>
+                <li>联系我们</li>
+                <li><a href="#">客服邮箱：alkdjfasdflkj@asdlfja.com</a></li>
+                <li><a href="#">大政服务协议</a></li>
+            </ul>
+        </div>*@
+ 
+        @*@Scripts.Render("~/bundles/jquery")
+        @RenderSection("scripts", required: false)*@
+    </body>
+</html>

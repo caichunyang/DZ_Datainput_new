@@ -1,0 +1,167 @@
+﻿@{
+    ViewBag.Title = "CenterOperatorManagement";
+    Layout = null;
+}
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="~/easyui/themes/icon.css">
+<script type="text/javascript" src="~/easyui/jquery.min.js"></script>
+<script src="~/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="~/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<link href="~/Content/table.css" rel="stylesheet" />
+@*<link href="~/Content/css/task.css" rel="stylesheet" />*@
+<link href="~/content/css/headfoot.css" rel="stylesheet" />
+<script src="~/Scripts/mycommon.js"></script>
+<script>
+    $(function () {
+        //  LoadDataGridview();
+        $("#commitpro_user").click(function () {
+            
+           // alert($("#objcombobox").combobox("getValue"));
+            LoadDataGridview();
+        });
+    });
+ function LoadDataGridview() {
+        var obj = {};
+     obj.objid = $("#objcombobox").combobox("getValue");
+        obj.userid = $("#useridtext").textbox("getValue");
+        
+        $("#datagridusermanage").datagrid({
+            // url: '/ShowOutPut/GetCenteroutputTJ',
+            url: '/management/LoadUserGridview',
+
+            queryParams: obj,//, casekey: "yd", wherestr: wherestr
+            rownumbers: true,
+            pagination: true,
+            pageList: [20, 30, 80, 100, 200],
+            pageSize: 20, //页大小
+            striped: true, //行背景交换
+            //border: false,
+            // idField: 'Userid', //主键
+            fitColumns: true,
+            columns: [[
+             
+                { field: 'Userid', title: '帐号', width: 100 },
+                //{ field: 'encode', title: 'encode', width: 100 },
+                { field: 'Username', title: '名称', width: 100, editor: { type: 'validatebox', options: { required: true,validType: 'length[4,20]' } } },
+                //{ field: 'lv', title: '上传量', width: 100 }
+                //, { field: 'integral', title: '日期', width: 100 },
+                { field: 'Userpwd', title: '密码', width: 100, editor: { type: 'validatebox', options: { required: true, validType: 'pwd' } } },
+                { field: 'Groupname', title: '分组', width: 100 },//, editor: { type: 'validatebox', options: { required: true } }
+                  { field: 'state', title: '可用', width: 100, editor: { type: 'checkbox', options: { on: '√', off: '×' } } },
+            
+                 {
+                     field: 'opt', title: '操作', width: 100, align: 'center',
+                     formatter: function (value, row,index) {
+                         var btn = "<a class='editcls' onclick=\"editRow(" + index + ")\" href='javascript:void(0)'>编辑</a>";
+                         btn += "&nbsp;&nbsp;&nbsp;&nbsp;<a class='editcls' onclick=\"saveRow(" + index + ")\" href='javascript:void(0)'>保存</a>"
+                         return btn;
+                     }
+                 }
+            ]],
+            onLoadError: function (data) {
+                alert("cw")
+            }
+              , onLoadSuccess: function (data) {
+                 // compute();
+              }
+        });
+    }
+ function editRow(index) {
+     $('#datagridusermanage').datagrid('selectRow', index)
+                        .datagrid('beginEdit', index);
+ }
+ function saveRow(index) {
+     if ($('#datagridusermanage').datagrid('validateRow', index)) {
+         var row = $('#datagridusermanage').datagrid('getRows')[index];
+         
+         $('#datagridusermanage').datagrid('endEdit', index);
+        
+         if (row.state == "×") {
+             row.state = 1;
+         } else {
+             row.state = 0;
+         }
+         $.post("/management/UpdateUser", row, function (data) {
+             if (data=="False") {
+                 alert("修改失败")
+             }
+         });
+     }
+ }
+ //var editIndex = undefined;
+ //function endEditing() {
+ //    if (editIndex == undefined) { return true }
+ //    if ($('#datagridusermanage').datagrid('validateRow', editIndex)) {
+ //        var ed = $('#datagridusermanage').datagrid('getEditor', { index: editIndex, field: 'productid' });
+ //        var productname = $(ed.target).combobox('getText');
+ //        $('#datagridusermanage').datagrid('getRows')[editIndex]['productname'] = productname;
+ //        $('#datagridusermanage').datagrid('endEdit', editIndex);
+ //        editIndex = undefined;
+ //        return true;
+ //    } else {
+ //        return false;
+ //    }
+ //}
+ //function onClickRow(index) {
+ //    if (editIndex != index) {
+ //        if (endEditing()) {
+ //            $('#datagridusermanage').datagrid('selectRow', index)
+ //                    .datagrid('beginEdit', index);
+ //            editIndex = index;
+ //        } else {
+ //            $('#datagridusermanage').datagrid('selectRow', editIndex);
+ //        }
+ //    }
+ //}
+ //function append() {
+ //    if (endEditing()) {
+ //        $('#datagridusermanage').datagrid('appendRow', { status: 'P' });
+ //        editIndex = $('#datagridusermanage').datagrid('getRows').length - 1;
+ //        $('#datagridusermanage').datagrid('selectRow', editIndex)
+ //                .datagrid('beginEdit', editIndex);
+ //    }
+ //}
+ //function removeit() {
+ //    if (editIndex == undefined) { return }
+ //    $('#datagridusermanage').datagrid('cancelEdit', editIndex)
+ //            .datagrid('deleteRow', editIndex);
+ //    editIndex = undefined;
+ //}
+ //function accept() {
+ //    if (endEditing()) {
+ //        $('#datagridusermanage').datagrid('acceptChanges');
+ //    }
+ //}
+ //function reject() {
+ //    $('#datagridusermanage').datagrid('rejectChanges');
+ //    editIndex = undefined;
+ //}
+ //function getChanges() {
+ //    var rows = $('#datagridusermanage').datagrid('getChanges');
+
+ //    alert(rows.length + ' rows are changed!');
+ //}
+</script>
+<div class="container" >
+    <div style="padding:5px"></div>
+
+    <ul class="chaxun">
+      
+      
+        @*<li>开始日期:<input id="startpro_user" class="easyui-datebox" editable="false"></li>
+        <li>
+            结束日期:  <input id="endpro_user" class="easyui-datebox" editable="false">
+        </li>*@
+       
+        <li>选择中心:<input id="objcombobox"  class="easyui-combobox" data-options="valueField:'id',editable:false,textField:'text',url:'/common/GetObjectCombobox/0'" /></li>
+        <li>用户帐号:<input  id="useridtext" class="easyui-textbox" value="" /></li>
+        <li><input type="button" value="查询" id="commitpro_user" class="button_chaxun"></li>
+    </ul>
+    <div style="margin:0px 50px auto;  ">
+        <!--<div id="magazineGrid"></div>-->
+        <div style="min-height:300px;">
+            <div id="datagridusermanage"> </div>
+        </div>
+    </div>
+</div>
